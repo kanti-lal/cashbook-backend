@@ -2,6 +2,7 @@ import express from "express";
 import { body, validationResult } from "express-validator";
 import { UserModel } from "../models/userModel.js";
 import { authenticateToken } from "../middleware/auth.js";
+import { sendResetEmail } from "../utils/email.js";
 
 const router = express.Router();
 
@@ -12,6 +13,9 @@ router.post(
     body("email").isEmail(),
     body("password").isLength({ min: 6 }),
     body("name").notEmpty(),
+    body("mobile").optional().isMobilePhone(),
+    body("address").optional(),
+    body("dateOfBirth").optional().isISO8601().toDate(),
   ],
   async (req, res) => {
     try {
@@ -62,5 +66,94 @@ router.get("/me", authenticateToken, (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
+// Request password reset
+router.post("/forgot-password", [body("email").isEmail()], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { resetToken, email } = await UserModel.createResetToken(
+      req.body.email
+    );
+    await sendResetEmail(email, resetToken);
+
+    res.json({ message: "Password reset email sent" });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// Reset password
+router.post(
+  "/reset-password",
+  [body("token").notEmpty(), body("password").isLength({ min: 6 })],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      await UserModel.resetPassword(req.body);
+      res.json({ message: "Password reset successful" });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
+);
+
+// Update password
+router.post(
+  "/update-password",
+  authenticateToken,
+  [
+    body("currentPassword").notEmpty(),
+    body("newPassword").isLength({ min: 6 }),
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      await UserModel.updatePassword(req.user.id, req.body);
+      res.json({ message: "Password updated successfully" });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
+);
+
+// Add new route for profile update
+router.put(
+  "/profile",
+  authenticateToken,
+  [
+    body("name").notEmpty(),
+    body("mobile").optional().isMobilePhone(),
+    body("address").optional(),
+    body("dateOfBirth").optional().isISO8601().toDate(),
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const updatedUser = await UserModel.updateProfile(req.user.id, req.body);
+      res.json(updatedUser);
+    } catch (error) {
+      if (error.message === "User not found") {
+        return res.status(404).json({ message: error.message });
+      }
+      res.status(500).json({ message: error.message });
+    }
+  }
+);
 
 export default router;

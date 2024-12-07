@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.get("/", (req, res) => {
   try {
-    const businesses = BusinessModel.getAll();
+    const businesses = BusinessModel.getAll(req.user.id);
     res.json(businesses);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -27,7 +27,10 @@ router.post(
     }
 
     try {
-      const business = BusinessModel.create(req.body);
+      const business = BusinessModel.create({
+        ...req.body,
+        userId: req.user.id,
+      });
       res.status(201).json(business);
     } catch (error) {
       res.status(500).json({ error: error.message });

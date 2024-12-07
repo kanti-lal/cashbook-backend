@@ -1,18 +1,20 @@
 import jwt from "jsonwebtoken";
+import { config } from "../config/config.js";
 
-export const authenticateToken = (req, res, next) => {
+export function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
 
-  if (!token) {
-    return res.status(401).json({ message: "Authentication required" });
-  }
+  if (token == null) return res.sendStatus(401);
 
-  try {
-    const user = jwt.verify(token, process.env.JWT_SECRET);
+  jwt.verify(token, config.jwtSecret, (err, user) => {
+    if (err) return res.sendStatus(403);
+
+    if (!user || !user.id) {
+      return res.sendStatus(403);
+    }
+
     req.user = user;
     next();
-  } catch (error) {
-    return res.status(403).json({ message: "Invalid or expired token" });
-  }
-};
+  });
+}
