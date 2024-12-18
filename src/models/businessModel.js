@@ -28,4 +28,27 @@ export class BusinessModel {
       throw error;
     }
   }
+
+  static update({ id, name, userId }) {
+    const db = getDb();
+
+    // First verify that the business exists and belongs to the user
+    const business = db
+      .prepare("SELECT * FROM businesses WHERE id = ? AND userId = ?")
+      .get(id, userId);
+
+    if (!business) {
+      throw new Error("Business not found or unauthorized");
+    }
+
+    try {
+      const stmt = db.prepare(
+        "UPDATE businesses SET name = ? WHERE id = ? AND userId = ?"
+      );
+      stmt.run(name, id, userId);
+      return { id, name, userId };
+    } catch (error) {
+      throw error;
+    }
+  }
 }

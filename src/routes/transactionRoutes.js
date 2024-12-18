@@ -120,4 +120,44 @@ router.get("/:businessId/analytics", (req, res) => {
   }
 });
 
+// Get transactions by customer ID
+router.get("/:businessId/customer-transactions/:customerId", (req, res) => {
+  try {
+    const transactions = TransactionModel.getTransactionsByCustomerId(
+      req.params.customerId,
+      req.params.businessId
+    );
+
+    if (!transactions || transactions.length === 0) {
+      return res.status(404).json({
+        message: "No transactions found for this customer",
+      });
+    }
+
+    res.json(transactions);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get transactions by supplier ID
+router.get("/:businessId/supplier-transactions/:supplierId", (req, res) => {
+  try {
+    const transactions = TransactionModel.getTransactionsBySupplierId(
+      req.params.supplierId,
+      req.params.businessId
+    );
+
+    if (!transactions || transactions.length === 0) {
+      return res.status(404).json({
+        message: "No transactions found for this supplier",
+      });
+    }
+
+    res.json(transactions);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;

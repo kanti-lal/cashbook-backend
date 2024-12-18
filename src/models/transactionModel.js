@@ -66,187 +66,308 @@ export class TransactionModel {
     return transaction;
   }
 
+  // static create(transaction) {
+  //   const db = new Database(config.dbPath);
+
+  //   try {
+  //     db.prepare("BEGIN TRANSACTION").run();
+
+  //     // Insert transaction
+  //     db.prepare(
+  //       `
+  //           INSERT INTO transactions
+  //           (id, type, amount, customerId, supplierId, description, date, category, paymentMode, businessId)
+  //           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  //       `
+  //     ).run(
+  //       transaction.id,
+  //       transaction.type,
+  //       transaction.amount,
+  //       transaction.customerId,
+  //       transaction.supplierId,
+  //       transaction.description,
+  //       transaction.date,
+  //       transaction.category,
+  //       transaction.paymentMode,
+  //       transaction.businessId
+  //     );
+
+  //     // Update balance based on transaction type
+  //     if (transaction.customerId) {
+  //       const balanceChange =
+  //         transaction.type === "IN"
+  //           ? transaction.amount // Customer pays (IN): Reduce their debt
+  //           : -transaction.amount; // Customer receives (OUT): Increase their debt
+
+  //       db.prepare(
+  //         `
+  //               UPDATE customers
+  //               SET balance = balance - ?
+  //               WHERE id = ? AND businessId = ?
+  //           `
+  //       ).run(balanceChange, transaction.customerId, transaction.businessId);
+  //     } else if (transaction.supplierId) {
+  //       const balanceChange =
+  //         transaction.type === "IN"
+  //           ? -transaction.amount // Supplier pays us (IN): Reduce our debt
+  //           : transaction.amount; // We pay supplier (OUT): Increase our debt
+
+  //       db.prepare(
+  //         `
+  //               UPDATE suppliers
+  //               SET balance = balance - ?
+  //               WHERE id = ? AND businessId = ?
+  //           `
+  //       ).run(balanceChange, transaction.supplierId, transaction.businessId);
+  //     }
+
+  //     db.prepare("COMMIT").run();
+  //     return transaction;
+  //   } catch (error) {
+  //     db.prepare("ROLLBACK").run();
+  //     throw error;
+  //   } finally {
+  //     db.close();
+  //   }
+  // }
+
   static create(transaction) {
     const db = new Database(config.dbPath);
 
-    db.prepare(
-      `
-      INSERT INTO transactions 
-      (id, type, amount, customerId, supplierId, description, date, category, paymentMode, businessId)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `
-    ).run(
-      transaction.id,
-      transaction.type,
-      transaction.amount,
-      transaction.customerId,
-      transaction.supplierId,
-      transaction.description,
-      transaction.date,
-      transaction.category,
-      transaction.paymentMode,
-      transaction.businessId
-    );
+    try {
+      db.prepare("BEGIN TRANSACTION").run();
 
-    // Update balance
-    if (transaction.customerId) {
-      const balanceChange =
-        transaction.type === "IN" ? -transaction.amount : transaction.amount;
+      // Insert transaction
       db.prepare(
         `
-        UPDATE customers 
-        SET balance = balance + ? 
-        WHERE id = ? AND businessId = ?
+        INSERT INTO transactions 
+        (id, type, amount, customerId, supplierId, description, date, category, paymentMode, businessId)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `
-      ).run(balanceChange, transaction.customerId, transaction.businessId);
-    } else if (transaction.supplierId) {
-      const balanceChange =
-        transaction.type === "IN" ? -transaction.amount : transaction.amount;
-      db.prepare(
-        `
-        UPDATE suppliers 
-        SET balance = balance + ? 
-        WHERE id = ? AND businessId = ?
-      `
-      ).run(balanceChange, transaction.supplierId, transaction.businessId);
-    }
+      ).run(
+        transaction.id,
+        transaction.type,
+        transaction.amount,
+        transaction.customerId,
+        transaction.supplierId,
+        transaction.description,
+        transaction.date,
+        transaction.category,
+        transaction.paymentMode,
+        transaction.businessId
+      );
 
-    db.close();
-    return transaction;
-  }
-
-  static update(id, businessId, updates) {
-    const db = new Database(config.dbPath);
-
-    // Get original transaction
-    const originalTransaction = db
-      .prepare(
-        `
-      SELECT * FROM transactions WHERE id = ? AND businessId = ?
-    `
-      )
-      .get(id, businessId);
-
-    if (!originalTransaction) {
-      throw new Error("Transaction not found");
-    }
-
-    // Revert original balance changes
-    if (originalTransaction.customerId) {
-      const balanceChange =
-        originalTransaction.type === "IN"
-          ? originalTransaction.amount
-          : -originalTransaction.amount;
-      db.prepare(
-        `
-        UPDATE customers 
-        SET balance = balance + ? 
-        WHERE id = ? AND businessId = ?
-      `
-      ).run(balanceChange, originalTransaction.customerId, businessId);
-    } else if (originalTransaction.supplierId) {
-      const balanceChange =
-        originalTransaction.type === "IN"
-          ? originalTransaction.amount
-          : -originalTransaction.amount;
-      db.prepare(
-        `
-        UPDATE suppliers 
-        SET balance = balance + ? 
-        WHERE id = ? AND businessId = ?
-      `
-      ).run(balanceChange, originalTransaction.supplierId, businessId);
-    }
-
-    // Update transaction
-    db.prepare(
-      `
-      UPDATE transactions 
-      SET type = ?, amount = ?, customerId = ?, supplierId = ?, 
-          description = ?, date = ?, category = ?, paymentMode = ?
-      WHERE id = ? AND businessId = ?
-    `
-    ).run(
-      updates.type,
-      updates.amount,
-      updates.customerId,
-      updates.supplierId,
-      updates.description,
-      updates.date,
-      updates.category,
-      updates.paymentMode,
-      id,
-      businessId
-    );
-
-    // Apply new balance changes
-    if (updates.customerId) {
-      const balanceChange =
-        updates.type === "IN" ? -updates.amount : updates.amount;
-      db.prepare(
-        `
-        UPDATE customers 
-        SET balance = balance + ? 
-        WHERE id = ? AND businessId = ?
-      `
-      ).run(balanceChange, updates.customerId, businessId);
-    } else if (updates.supplierId) {
-      const balanceChange =
-        updates.type === "IN" ? -updates.amount : updates.amount;
-      db.prepare(
-        `
-        UPDATE suppliers 
-        SET balance = balance + ? 
-        WHERE id = ? AND businessId = ?
-      `
-      ).run(balanceChange, updates.supplierId, businessId);
-    }
-
-    const updatedTransaction = this.getById(id, businessId);
-    db.close();
-    return updatedTransaction;
-  }
-
-  static delete(id, businessId) {
-    const db = new Database(config.dbPath);
-
-    const transaction = db
-      .prepare(
-        `
-      SELECT * FROM transactions WHERE id = ? AND businessId = ?
-    `
-      )
-      .get(id, businessId);
-
-    if (transaction) {
+      // Update balance based on transaction type
       if (transaction.customerId) {
         const balanceChange =
-          transaction.type === "IN" ? transaction.amount : -transaction.amount;
+          transaction.type === "IN"
+            ? transaction.amount // Customer pays us (IN), increase their balance
+            : -transaction.amount; // We give to customer (OUT), decrease their balance
+
         db.prepare(
           `
           UPDATE customers 
           SET balance = balance + ? 
           WHERE id = ? AND businessId = ?
         `
-        ).run(balanceChange, transaction.customerId, businessId);
+        ).run(balanceChange, transaction.customerId, transaction.businessId);
       } else if (transaction.supplierId) {
         const balanceChange =
-          transaction.type === "IN" ? transaction.amount : -transaction.amount;
+          transaction.type === "IN"
+            ? transaction.amount // Supplier gives us money (IN), reduce our debt
+            : -transaction.amount; // We pay supplier (OUT), increase our debt
+
         db.prepare(
           `
           UPDATE suppliers 
           SET balance = balance + ? 
           WHERE id = ? AND businessId = ?
         `
-        ).run(balanceChange, transaction.supplierId, businessId);
+        ).run(balanceChange, transaction.supplierId, transaction.businessId);
       }
 
-      db.prepare(
-        "DELETE FROM transactions WHERE id = ? AND businessId = ?"
-      ).run(id, businessId);
+      db.prepare("COMMIT").run();
+      return this.getById(transaction.id, transaction.businessId);
+    } catch (error) {
+      db.prepare("ROLLBACK").run();
+      throw error;
+    } finally {
+      db.close();
     }
+  }
 
-    db.close();
+  static update(id, businessId, updates) {
+    const db = new Database(config.dbPath);
+
+    try {
+      db.prepare("BEGIN TRANSACTION").run();
+
+      // Get original transaction
+      const originalTransaction = db
+        .prepare(
+          `
+            SELECT * FROM transactions WHERE id = ? AND businessId = ?
+        `
+        )
+        .get(id, businessId);
+
+      if (!originalTransaction) {
+        throw new Error("Transaction not found");
+      }
+
+      // Reverse original balance changes
+      if (originalTransaction.customerId) {
+        const reverseChange =
+          originalTransaction.type === "IN"
+            ? -originalTransaction.amount // Reverse customer payment
+            : originalTransaction.amount; // Reverse money given to customer
+
+        db.prepare(
+          `
+                UPDATE customers 
+                SET balance = balance - ? 
+                WHERE id = ? AND businessId = ?
+            `
+        ).run(reverseChange, originalTransaction.customerId, businessId);
+      } else if (originalTransaction.supplierId) {
+        const reverseChange =
+          originalTransaction.type === "IN"
+            ? originalTransaction.amount // Reverse supplier payment
+            : -originalTransaction.amount; // Reverse payment to supplier
+
+        db.prepare(
+          `
+                UPDATE suppliers 
+                SET balance = balance - ? 
+                WHERE id = ? AND businessId = ?
+            `
+        ).run(reverseChange, originalTransaction.supplierId, businessId);
+      }
+
+      // Update transaction
+      db.prepare(
+        `
+            UPDATE transactions 
+            SET type = ?, amount = ?, customerId = ?, supplierId = ?, 
+                description = ?, date = ?, category = ?, paymentMode = ?
+            WHERE id = ? AND businessId = ?
+        `
+      ).run(
+        updates.type,
+        updates.amount,
+        updates.customerId,
+        updates.supplierId,
+        updates.description,
+        updates.date,
+        updates.category,
+        updates.paymentMode,
+        id,
+        businessId
+      );
+
+      // Apply new balance changes
+      if (updates.customerId) {
+        const newChange =
+          updates.type === "IN"
+            ? updates.amount // New customer payment
+            : -updates.amount; // New money given to customer
+
+        db.prepare(
+          `
+                UPDATE customers 
+                SET balance = balance - ? 
+                WHERE id = ? AND businessId = ?
+            `
+        ).run(newChange, updates.customerId, businessId);
+      } else if (updates.supplierId) {
+        const newChange =
+          updates.type === "IN"
+            ? -updates.amount // New supplier payment
+            : updates.amount; // New payment to supplier
+
+        db.prepare(
+          `
+                UPDATE suppliers 
+                SET balance = balance - ? 
+                WHERE id = ? AND businessId = ?
+            `
+        ).run(newChange, updates.supplierId, businessId);
+      }
+
+      db.prepare("COMMIT").run();
+      return this.getById(id, businessId);
+    } catch (error) {
+      db.prepare("ROLLBACK").run();
+      throw error;
+    } finally {
+      db.close();
+    }
+  }
+
+  static delete(id, businessId) {
+    const db = new Database(config.dbPath);
+
+    try {
+      db.prepare("BEGIN TRANSACTION").run();
+
+      // Get transaction before deletion
+      const transaction = db
+        .prepare(
+          `
+            SELECT * FROM transactions 
+            WHERE id = ? AND businessId = ?
+        `
+        )
+        .get(id, businessId);
+
+      if (!transaction) {
+        throw new Error("Transaction not found");
+      }
+
+      // Reverse the balance changes
+      if (transaction.customerId) {
+        const reverseChange =
+          transaction.type === "IN"
+            ? transaction.amount // Reverse customer payment (add back to balance)
+            : -transaction.amount; // Reverse money given (subtract from balance)
+
+        db.prepare(
+          `
+                UPDATE customers 
+                SET balance = balance - ? 
+                WHERE id = ? AND businessId = ?
+            `
+        ).run(reverseChange, transaction.customerId, businessId);
+      } else if (transaction.supplierId) {
+        const reverseChange =
+          transaction.type === "IN"
+            ? transaction.amount // Reverse supplier payment
+            : -transaction.amount; // Reverse payment to supplier
+
+        db.prepare(
+          `
+                UPDATE suppliers 
+                SET balance = balance - ? 
+                WHERE id = ? AND businessId = ?
+            `
+        ).run(reverseChange, transaction.supplierId, businessId);
+      }
+
+      // Delete the transaction
+      db.prepare(
+        `
+            DELETE FROM transactions 
+            WHERE id = ? AND businessId = ?
+        `
+      ).run(id, businessId);
+
+      db.prepare("COMMIT").run();
+    } catch (error) {
+      db.prepare("ROLLBACK").run();
+      throw error;
+    } finally {
+      db.close();
+    }
   }
 
   static getAnalytics(businessId) {
@@ -294,5 +415,47 @@ export class TransactionModel {
       ...month,
       balance: month.totalIn - month.totalOut,
     }));
+  }
+
+  static getTransactionsByCustomerId(customerId, businessId) {
+    const db = new Database(config.dbPath);
+    const transactions = db
+      .prepare(
+        `
+      SELECT 
+        t.*,
+        c.name as customerName,
+        c.phoneNumber as customerPhone
+      FROM transactions t
+      LEFT JOIN customers c ON t.customerId = c.id
+      WHERE t.customerId = ? AND t.businessId = ?
+      ORDER BY t.date DESC
+    `
+      )
+      .all(customerId, businessId);
+
+    db.close();
+    return transactions;
+  }
+
+  static getTransactionsBySupplierId(supplierId, businessId) {
+    const db = new Database(config.dbPath);
+    const transactions = db
+      .prepare(
+        `
+      SELECT 
+        t.*,
+        s.name as supplierName,
+        s.phoneNumber as supplierPhone
+      FROM transactions t
+      LEFT JOIN suppliers s ON t.supplierId = s.id
+      WHERE t.supplierId = ? AND t.businessId = ?
+      ORDER BY t.date DESC
+    `
+      )
+      .all(supplierId, businessId);
+
+    db.close();
+    return transactions;
   }
 }
