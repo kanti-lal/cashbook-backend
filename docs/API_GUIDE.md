@@ -72,6 +72,12 @@
       "createdAt": "2023-12-20"
     }
     ```
+  - `PUT /api/businesses/:businessId` - Update business
+    ```json
+    {
+      "name": "Updated Business Name"
+    }
+    ```
 
   ### Customers
 
@@ -109,23 +115,63 @@
 
   ### Transactions
 
-  - `GET /api/businesses/:businessId/transactions` - Get all transactions
-  - `GET /api/businesses/:businessId/transactions?startDate=2023-01-01&endDate=2023-12-31&paymentMode=CASH` - Filter transactions
-  - `POST /api/businesses/:businessId/transactions` - Create transaction
-    ```json
-    {
-      "id": "unique-id",
-      "type": "IN",  // or "OUT"
-      "amount": 100.00,
-      "customerId": "customer-id",  // optional
-      "supplierId": "supplier-id",  // optional
-      "description": "Payment for goods",
-      "date": "2023-12-20",
-      "category": "CUSTOMER",  // or "SUPPLIER"
-      "paymentMode": "CASH"    // or "ONLINE"
-    }
-    ```
-  - `DELETE /api/businesses/:businessId/transactions/:transactionId` - Delete transaction
+### Get All Transactions
+- **Endpoint**: GET `/:businessId/transactions`
+- **Query Parameters**:
+  - `search`: Search term
+  - `startDate`: Filter by start date
+  - `endDate`: Filter by end date
+  - `type`: Transaction type (IN/OUT)
+  - `category`: Transaction category (CUSTOMER/SUPPLIER)
+  - `paymentMode`: Payment mode (CASH/ONLINE)
+- **Response**: Array of transactions
+
+### Get Transaction by ID
+- **Endpoint**: GET `/:businessId/transactions/:transactionId`
+- **Response**: Single transaction object
+
+### Get Customer Transactions
+- **Endpoint**: GET `/:businessId/customer-transactions/:customerId`
+- **Description**: Retrieves all transactions for a specific customer
+- **Response**: Array of transactions with customer details
+- **Error Responses**:
+  - 404: No transactions found
+  - 500: Server error
+
+### Get Supplier Transactions
+- **Endpoint**: GET `/:businessId/supplier-transactions/:supplierId`
+- **Description**: Retrieves all transactions for a specific supplier
+- **Response**: Array of transactions with supplier details
+- **Error Responses**:
+  - 404: No transactions found
+  - 500: Server error
+
+### Create Transaction
+- **Endpoint**: POST `/:businessId/transactions`
+- **Body Parameters**:
+  ```json
+  {
+    "id": "string",
+    "type": "IN|OUT",
+    "amount": "number",
+    "category": "CUSTOMER|SUPPLIER",
+    "paymentMode": "CASH|ONLINE",
+    "date": "string",
+    "customerId": "string (optional)",
+    "supplierId": "string (optional)",
+    "description": "string (optional)"
+  }
+  ```
+- **Response**: Created transaction object
+
+### Update Transaction
+- **Endpoint**: PUT `/:businessId/transactions/:transactionId`
+- **Body Parameters**: Same as Create Transaction (except 'id')
+- **Response**: Updated transaction object
+
+### Delete Transaction
+- **Endpoint**: DELETE `/:businessId/transactions/:transactionId`
+- **Response**: 200 OK
 
   ### Analytics
 
