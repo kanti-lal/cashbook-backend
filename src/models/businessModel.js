@@ -51,4 +51,17 @@ export class BusinessModel {
       throw error;
     }
   }
+
+  static getById(id) {
+    const db = getDb();
+    const business = db
+      .prepare("SELECT * FROM businesses WHERE id = ?")
+      .get(id);
+
+    if (!business) {
+      throw new Error("Business not found");
+    }
+
+    return business;
+  }
 }

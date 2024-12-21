@@ -1,6 +1,10 @@
 import express from "express";
 import { body, validationResult } from "express-validator";
 import { TransactionModel } from "../models/transactionModel.js";
+import { BusinessModel } from "../models/businessModel.js";
+import { SupplierModel } from "../models/supplierModel.js";
+import { PDFGenerator } from "../utils/pdfGenerator.js";
+import { CustomerModel } from "../models/customerModel.js";
 
 const router = express.Router();
 
@@ -159,5 +163,113 @@ router.get("/:businessId/supplier-transactions/:supplierId", (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// Export transactions as PDF
+router.get("/:businessId/export-transactions", async (req, res) => {
+  try {
+    const transactions = TransactionModel.getAll(
+      req.params.businessId,
+      req.query
+    );
+    const businessInfo = BusinessModel.getById(req.params.businessId);
+
+    const buffer = await PDFGenerator.generateTransactionsPDF(
+      transactions,
+      businessInfo
+    );
+
+    // Set binary response type
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="transactions-${
+        new Date().toISOString().split("T")[0]
+      }.pdf"`
+    );
+    res.setHeader("Content-Length", buffer.length);
+
+    // Send binary data
+    res.end(buffer, "binary");
+  } catch (error) {
+    console.error("PDF Generation Error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Export customer ledger as PDF
+router.get(
+  "/:businessId/export-customer-ledger/:customerId",
+  async (req, res) => {
+    try {
+      const transactions = TransactionModel.getTransactionsByCustomerId(
+        req.params.customerId,
+        req.params.businessId
+      );
+      const customerInfo = CustomerModel.getById(
+        req.params.customerId,
+        req.params.businessId
+      );
+      const businessInfo = BusinessModel.getById(req.params.businessId);
+
+      const buffer = await PDFGenerator.generatePartyLedgerPDF(
+        transactions,
+        { ...customerInfo, type: "Customer" },
+        businessInfo
+      );
+
+      res.set({
+        "Content-Type": "application/pdf",
+        "Content-Length": buffer.length,
+        "Content-Disposition": `attachment; filename="customer-ledger-${
+          req.params.customerId
+        }-${new Date().toISOString().split("T")[0]}.pdf"`,
+        "Cache-Control": "no-cache",
+      });
+
+      res.send(buffer);
+    } catch (error) {
+      console.error("PDF Generation Error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+// Export supplier ledger as PDF
+router.get(
+  "/:businessId/export-supplier-ledger/:supplierId",
+  async (req, res) => {
+    try {
+      const transactions = TransactionModel.getTransactionsBySupplierId(
+        req.params.supplierId,
+        req.params.businessId
+      );
+      const supplierInfo = SupplierModel.getById(
+        req.params.supplierId,
+        req.params.businessId
+      );
+      const businessInfo = BusinessModel.getById(req.params.businessId);
+
+      const buffer = await PDFGenerator.generatePartyLedgerPDF(
+        transactions,
+        { ...supplierInfo, type: "Supplier" },
+        businessInfo
+      );
+
+      res.set({
+        "Content-Type": "application/pdf",
+        "Content-Length": buffer.length,
+        "Content-Disposition": `attachment; filename="supplier-ledger-${
+          req.params.supplierId
+        }-${new Date().toISOString().split("T")[0]}.pdf"`,
+        "Cache-Control": "no-cache",
+      });
+
+      res.send(buffer);
+    } catch (error) {
+      console.error("PDF Generation Error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
 
 export default router;
