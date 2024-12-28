@@ -29,6 +29,31 @@ export class PDFGenerator {
         .filter((t) => t.type === "OUT")
         .reduce((sum, t) => sum + t.amount, 0);
 
+      // Add cash and online calculations
+      const cashIn = transactions
+        .filter(
+          (t) => t.type === "IN" && t.paymentMode?.toLowerCase() === "cash"
+        )
+        .reduce((sum, t) => sum + t.amount, 0);
+
+      const cashOut = transactions
+        .filter(
+          (t) => t.type === "OUT" && t.paymentMode?.toLowerCase() === "cash"
+        )
+        .reduce((sum, t) => sum + t.amount, 0);
+
+      const onlineIn = transactions
+        .filter(
+          (t) => t.type === "IN" && t.paymentMode?.toLowerCase() === "online"
+        )
+        .reduce((sum, t) => sum + t.amount, 0);
+
+      const onlineOut = transactions
+        .filter(
+          (t) => t.type === "OUT" && t.paymentMode?.toLowerCase() === "online"
+        )
+        .reduce((sum, t) => sum + t.amount, 0);
+
       const html = `
         <!DOCTYPE html>
         <html>
@@ -116,18 +141,30 @@ export class PDFGenerator {
                   <p style="color: #16a34a; font-size: 18px; font-weight: bold;">₹${totalIn.toFixed(
                     2
                   )}</p>
+                  <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                    Cash: ₹${cashIn.toFixed(2)}<br>
+                    Online: ₹${onlineIn.toFixed(2)}
+                  </div>
                 </div>
                 <div class="summary-item">
                   <h3>Total OUT (-)</h3>
                   <p style="color: #dc2626; font-size: 18px; font-weight: bold;">₹${totalOut.toFixed(
                     2
                   )}</p>
+                  <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                    Cash: ₹${cashOut.toFixed(2)}<br>
+                    Online: ₹${onlineOut.toFixed(2)}
+                  </div>
                 </div>
                 <div class="summary-item">
                   <h3>Net Balance</h3>
                   <p style="color: #9333ea; font-size: 18px; font-weight: bold;">₹${(
                     totalIn - totalOut
                   ).toFixed(2)}</p>
+                  <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                    Cash: ₹${(cashIn - cashOut).toFixed(2)}<br>
+                    Online: ₹${(onlineIn - onlineOut).toFixed(2)}
+                  </div>
                 </div>
               </div>
             </div>
