@@ -34,53 +34,100 @@ export class PDFGenerator {
         <html>
           <head>
             <style>
-              body { font-family: Arial, sans-serif; padding: 20px; }
-              .header { text-align: center; margin-bottom: 30px; }
+              body { font-family: Arial, sans-serif; padding: 20px; font-size: 14px; }
+              .header { 
+                text-align: center; 
+                margin-bottom: 30px; 
+                background-color: #9333ea;
+                color: white;
+                padding: 20px;
+                border-radius: 8px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+              }
+              .business-name {
+                font-size: 24px;
+                font-weight: bold;
+              }
+              .header-right {
+                text-align: right;
+              }
               .summary-box {
                 border: 1px solid #ddd;
                 border-radius: 8px;
                 padding: 15px;
                 margin-bottom: 20px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
               }
               .summary-grid {
                 display: grid;
                 grid-template-columns: repeat(3, 1fr);
                 gap: 20px;
               }
+              .summary-item {
+                background-color: #f8f9fa;
+                padding: 15px;
+                border-radius: 6px;
+                text-align: center;
+              }
               table {
                 width: 100%;
                 border-collapse: collapse;
                 margin-top: 20px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
               }
               th, td {
                 border: 1px solid #ddd;
-                padding: 8px;
+                padding: 10px;
                 text-align: left;
+                font-size: 12px;
               }
-              th { background-color: #f8f9fa; }
+              th { 
+                background-color: #9333ea15; 
+                color: #9333ea;
+              }
+              tr:nth-child(even) { background-color: #f8f9fa; }
+              tr:hover { background-color: #f3f4f6; }
               .amount { text-align: right; }
-              .footer { margin-top: 20px; color: #666; font-size: 12px; }
+              .footer { 
+                margin-top: 20px; 
+                color: #666; 
+                font-size: 11px;
+                text-align: center;
+              }
             </style>
           </head>
           <body>
             <div class="header">
-              <h2>Cashbook Statement</h2>
-              <p>${new Date().toLocaleDateString()}</p>
+              <div class="business-name">${
+                businessInfo?.name || "Business Name"
+              }</div>
+              <div class="header-right">
+                <h2>Cashbook Statement</h2>
+                <p>${new Date().toLocaleDateString()}</p>
+              </div>
             </div>
 
             <div class="summary-box">
               <div class="summary-grid">
-                <div>
+                <div class="summary-item">
                   <h3>Total IN (+)</h3>
-                  <p>₹${totalIn.toFixed(2)}</p>
+                  <p style="color: #16a34a; font-size: 18px; font-weight: bold;">₹${totalIn.toFixed(
+                    2
+                  )}</p>
                 </div>
-                <div>
+                <div class="summary-item">
                   <h3>Total OUT (-)</h3>
-                  <p>₹${totalOut.toFixed(2)}</p>
+                  <p style="color: #dc2626; font-size: 18px; font-weight: bold;">₹${totalOut.toFixed(
+                    2
+                  )}</p>
                 </div>
-                <div>
+                <div class="summary-item">
                   <h3>Net Balance</h3>
-                  <p>₹${(totalIn - totalOut).toFixed(2)}</p>
+                  <p style="color: #9333ea; font-size: 18px; font-weight: bold;">₹${(
+                    totalIn - totalOut
+                  ).toFixed(2)}</p>
                 </div>
               </div>
             </div>
@@ -89,6 +136,8 @@ export class PDFGenerator {
               <thead>
                 <tr>
                   <th>Date</th>
+                  <th>Name</th>
+                  <th>Type</th>
                   <th>Total IN</th>
                   <th>Total OUT</th>
                   <th>Daily Balance</th>
@@ -101,7 +150,8 @@ export class PDFGenerator {
             </table>
 
             <div class="footer">
-              Report Generated: ${new Date().toLocaleString()}
+              <p>Report Generated: ${new Date().toLocaleString()}</p>
+              <p>${businessInfo?.address || ""}</p>
             </div>
           </body>
         </html>
@@ -250,17 +300,48 @@ export class PDFGenerator {
         const dailyBalance = dayIn - dayOut;
         runningBalance += dailyBalance;
 
-        return `
+        // Create rows for each transaction in the day
+        return dayTransactions
+          .map(
+            (transaction) => `
           <tr>
             <td>${date}</td>
-            <td class="amount">₹${dayIn.toFixed(2)}</td>
-            <td class="amount">₹${dayOut.toFixed(2)}</td>
+            <td>${this._getPartyName(transaction)}</td>
+            <td>${this._getPartyType(transaction)}</td>
+            <td class="amount">${
+              transaction.type === "IN"
+                ? `₹${transaction.amount.toFixed(2)}`
+                : "-"
+            }</td>
+            <td class="amount">${
+              transaction.type === "OUT"
+                ? `₹${transaction.amount.toFixed(2)}`
+                : "-"
+            }</td>
             <td class="amount">₹${dailyBalance.toFixed(2)}</td>
             <td class="amount">₹${runningBalance.toFixed(2)}</td>
           </tr>
-        `;
+        `
+          )
+          .join("");
       })
       .join("");
+  }
+
+  // Helper method to get party name
+  static _getPartyName(transaction) {
+    if (transaction.party) {
+      return transaction.party.name || transaction.partyName || "N/A";
+    }
+    return transaction.partyName || "N/A";
+  }
+
+  // Helper method to get party type
+  static _getPartyType(transaction) {
+    if (transaction.party) {
+      return transaction.party.type || transaction.partyType || "N/A";
+    }
+    return transaction.partyType || "N/A";
   }
 
   static _generatePartyRows(transactions, partyInfo) {
