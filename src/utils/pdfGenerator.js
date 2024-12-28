@@ -459,18 +459,15 @@ export class PDFGenerator {
 
   // Helper method to get party name
   static _getPartyName(transaction) {
-    if (transaction.party) {
-      return transaction.party.name || transaction.partyName || "N/A";
-    }
     return transaction.partyName || "N/A";
   }
 
   // Helper method to get party type
   static _getPartyType(transaction) {
-    if (transaction.party) {
-      return transaction.party.type || transaction.partyType || "N/A";
-    }
-    return transaction.partyType || "N/A";
+    // if (transaction.party) {
+    //   return transaction.party.type || transaction.partyType || "N/A";
+    // }
+    return transaction.paymentMode || transaction.Type || "N/A";
   }
 
   static _generateDetailedPartyRows(transactions) {

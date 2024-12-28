@@ -8,27 +8,38 @@ export class TransactionModel {
   ) {
     const db = new Database(config.dbPath);
 
-    let query = "SELECT * FROM transactions WHERE businessId = ?";
+    let query = `
+      SELECT 
+        t.*,
+        CASE 
+          WHEN t.customerId IS NOT NULL THEN c.name
+          WHEN t.supplierId IS NOT NULL THEN s.name
+          ELSE NULL
+        END as partyName
+      FROM transactions t
+      LEFT JOIN customers c ON t.customerId = c.id
+      LEFT JOIN suppliers s ON t.supplierId = s.id
+      WHERE t.businessId = ?`;
     const params = [businessId];
 
     if (startDate) {
-      query += " AND date >= ?";
+      query += " AND t.date >= ?";
       params.push(startDate);
     }
     if (endDate) {
-      query += " AND date <= ?";
+      query += " AND t.date <= ?";
       params.push(endDate);
     }
     if (type) {
-      query += " AND type = ?";
+      query += " AND t.type = ?";
       params.push(type);
     }
     if (category) {
-      query += " AND category = ?";
+      query += " AND t.category = ?";
       params.push(category);
     }
     if (paymentMode) {
-      query += " AND paymentMode = ?";
+      query += " AND t.paymentMode = ?";
       params.push(paymentMode);
     }
 
