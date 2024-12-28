@@ -151,7 +151,6 @@ export class PDFGenerator {
 
             <div class="footer">
               <p>Report Generated: ${new Date().toLocaleString()}</p>
-              <p>${businessInfo?.address || ""}</p>
             </div>
           </body>
         </html>
@@ -178,111 +177,241 @@ export class PDFGenerator {
     }
   }
 
-  static async generatePartyLedgerPDF(
-    transactions,
-    partyInfo,
-    businessInfo,
-    res
-  ) {
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage();
-
-    const totalGet = transactions
-      .filter((t) => t.type === "IN")
-      .reduce((sum, t) => sum + t.amount, 0);
-
-    const totalGive = transactions
-      .filter((t) => t.type === "OUT")
-      .reduce((sum, t) => sum + t.amount, 0);
-
-    const html = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 20px; }
-            .header { text-align: center; margin-bottom: 30px; }
-            .summary-box {
-              border: 1px solid #ddd;
-              border-radius: 8px;
-              padding: 15px;
-              margin-bottom: 20px;
-            }
-            .summary-grid {
-              display: grid;
-              grid-template-columns: repeat(3, 1fr);
-              gap: 20px;
-            }
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              margin-top: 20px;
-            }
-            th, td {
-              border: 1px solid #ddd;
-              padding: 8px;
-              text-align: left;
-            }
-            th { background-color: #f8f9fa; }
-            .amount { text-align: right; }
-            .footer { margin-top: 20px; color: #666; font-size: 12px; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h2>${partyInfo.type} List Report</h2>
-            <p>As of Today - ${new Date().toLocaleDateString()}</p>
-          </div>
-
-          <div class="summary-box">
-            <div class="summary-grid">
-              <div>
-                <h3>You'll Get</h3>
-                <p>₹${totalGet.toFixed(2)}</p>
-              </div>
-              <div>
-                <h3>You'll Give</h3>
-                <p>₹${totalGive.toFixed(2)}</p>
-              </div>
-              <div>
-                <h3>Net Balance</h3>
-                <p>₹${(totalGive - totalGet).toFixed(2)} Cr</p>
-              </div>
-            </div>
-          </div>
-
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Details</th>
-                <th>You'll Get</th>
-                <th>You'll Give</th>
-                <th>Collection Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${this._generatePartyRows(transactions, partyInfo)}
-            </tbody>
-          </table>
-
-          <div class="footer">
-            Report Generated: ${new Date().toLocaleString()}
-          </div>
-        </body>
-      </html>
-    `;
-
-    await page.setContent(html);
-    const pdf = await page.pdf({
-      format: "A4",
-      margin: { top: "20px", right: "20px", bottom: "20px", left: "20px" },
+  static async generatePartyLedgerPDF(transactions, partyInfo, businessInfo) {
+    const browser = await puppeteer.launch({
+      headless: "new",
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--font-render-hinting=none",
+      ],
     });
 
-    await browser.close();
+    try {
+      const page = await browser.newPage();
 
-    res.contentType("application/pdf");
-    res.send(pdf);
+      const totalGet = transactions
+        .filter((t) => t.type === "IN")
+        .reduce((sum, t) => sum + t.amount, 0);
+
+      const totalGive = transactions
+        .filter((t) => t.type === "OUT")
+        .reduce((sum, t) => sum + t.amount, 0);
+
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>
+              body { 
+                font-family: Arial, sans-serif; 
+                padding: 20px; 
+                font-size: 14px;
+                line-height: 1.6;
+                color: #333;
+              }
+              .header { 
+                text-align: center; 
+                margin-bottom: 30px; 
+                background-color: #9333ea;
+                color: white;
+                padding: 20px;
+                border-radius: 8px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+              }
+              .business-name {
+                font-size: 24px;
+                font-weight: bold;
+              }
+              .header-right {
+                text-align: right;
+              }
+              .party-info {
+                background-color: #f8f9fa;
+                border-radius: 8px;
+                padding: 20px;
+                margin-bottom: 30px;
+                border: 1px solid #e2e8f0;
+              }
+              .party-info h3 {
+                margin: 0;
+                color: #9333ea;
+                font-size: 18px;
+              }
+              .party-details {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+                margin-top: 15px;
+              }
+              .party-detail-item {
+                font-size: 14px;
+              }
+              .summary-box {
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                padding: 20px;
+                margin-bottom: 30px;
+                background-color: white;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+              }
+              .summary-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 20px;
+              }
+              .summary-item {
+                background-color: #f8f9fa;
+                padding: 20px;
+                border-radius: 8px;
+                text-align: center;
+                border: 1px solid #e2e8f0;
+              }
+              .summary-item h3 {
+                margin: 0 0 10px 0;
+                color: #4b5563;
+                font-size: 16px;
+              }
+              .summary-item p {
+                margin: 0;
+                font-size: 20px;
+                font-weight: bold;
+              }
+              .get-amount { color: #16a34a; }
+              .give-amount { color: #dc2626; }
+              .net-amount { color: #9333ea; }
+              table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 20px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+              }
+              th, td {
+                border: 1px solid #e2e8f0;
+                padding: 12px;
+                text-align: left;
+                font-size: 13px;
+              }
+              th { 
+                background-color: #9333ea15;
+                color: #9333ea;
+                font-weight: 600;
+              }
+              tr:nth-child(even) { background-color: #f8f9fa; }
+              tr:hover { background-color: #f3f4f6; }
+              .amount { 
+                text-align: right;
+                font-family: monospace;
+                font-size: 14px;
+              }
+              .footer { 
+                margin-top: 30px; 
+                color: #666; 
+                font-size: 12px;
+                text-align: center;
+                border-top: 1px solid #e2e8f0;
+                padding-top: 20px;
+              }
+              .transaction-date {
+                color: #666;
+                font-size: 12px;
+              }
+              .status-badge {
+                display: inline-block;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 12px;
+                font-weight: 500;
+              }
+              .status-completed {
+                background-color: #dcfce7;
+                color: #16a34a;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <div class="business-name">${
+                businessInfo?.name || "Business Name"
+              }</div>
+              <div class="header-right">
+                <h2>${partyInfo.type} Ledger Statement</h2>
+                <p>${new Date().toLocaleDateString()}</p>
+              </div>
+            </div>
+
+            <div class="party-info">
+              <h3>${partyInfo.type} Information</h3>
+              <div class="party-details">
+                <div class="party-detail-item">
+                  <strong>Name:</strong> ${partyInfo.name}
+                </div>
+                <div class="party-detail-item">
+                  <strong>Phone:</strong> ${partyInfo.phoneNumber || "N/A"}
+                </div>
+              </div>
+            </div>
+
+            <div class="summary-box">
+              <div class="summary-grid">
+                <div class="summary-item">
+                  <h3>You'll Get</h3>
+                  <p class="get-amount">₹${totalGet.toFixed(2)}</p>
+                </div>
+                <div class="summary-item">
+                  <h3>You'll Give</h3>
+                  <p class="give-amount">₹${totalGive.toFixed(2)}</p>
+                </div>
+                <div class="summary-item">
+                  <h3>Net Balance</h3>
+                  <p class="net-amount">₹${(totalGet - totalGive).toFixed(
+                    2
+                  )}</p>
+                </div>
+              </div>
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Description</th>
+                  <th>You'll Get</th>
+                  <th>You'll Give</th>
+                  <th>Running Balance</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${this._generateDetailedPartyRows(transactions)}
+              </tbody>
+            </table>
+
+            <div class="footer">
+              <p><strong>Report Generated:</strong> ${new Date().toLocaleString()}</p>
+            </div>
+          </body>
+        </html>
+      `;
+
+      await page.setContent(html, {
+        waitUntil: ["load", "networkidle0"],
+        timeout: 30000,
+      });
+
+      const pdf = await page.pdf({
+        format: "A4",
+        printBackground: true,
+        margin: { top: "20px", right: "20px", bottom: "20px", left: "20px" },
+        preferCSSPageSize: true,
+      });
+
+      return pdf;
+    } finally {
+      await browser.close();
+    }
   }
 
   static _generateTransactionRows(transactions) {
@@ -344,22 +473,40 @@ export class PDFGenerator {
     return transaction.partyType || "N/A";
   }
 
-  static _generatePartyRows(transactions, partyInfo) {
-    return `
-      <tr>
-        <td>${partyInfo.name}</td>
-        <td>${partyInfo.phone || ""}</td>
-        <td class="amount">₹${transactions
-          .filter((t) => t.type === "IN")
-          .reduce((sum, t) => sum + t.amount, 0)
-          .toFixed(2)}</td>
-        <td class="amount">₹${transactions
-          .filter((t) => t.type === "OUT")
-          .reduce((sum, t) => sum + t.amount, 0)
-          .toFixed(2)}</td>
-        <td>${transactions[0]?.date || ""}</td>
-      </tr>
-    `;
+  static _generateDetailedPartyRows(transactions) {
+    let runningBalance = 0;
+    return transactions
+      .map((transaction) => {
+        const amount = transaction.amount;
+        if (transaction.type === "IN") {
+          runningBalance += amount;
+        } else {
+          runningBalance -= amount;
+        }
+
+        return `
+          <tr>
+            <td class="transaction-date">
+              ${new Date(transaction.date).toLocaleDateString()}
+            </td>
+            <td>${transaction.description || "No description"}</td>
+            <td class="amount">${
+              transaction.type === "IN" ? `₹${amount.toFixed(2)}` : "-"
+            }</td>
+            <td class="amount">${
+              transaction.type === "OUT" ? `₹${amount.toFixed(2)}` : "-"
+            }</td>
+            <td class="amount" style="color: ${
+              runningBalance >= 0 ? "#16a34a" : "#dc2626"
+            }">
+              ₹${Math.abs(runningBalance).toFixed(2)} ${
+          runningBalance >= 0 ? "Dr" : "Cr"
+        }
+            </td>
+          </tr>
+        `;
+      })
+      .join("");
   }
 
   static _groupTransactionsByDate(transactions) {
