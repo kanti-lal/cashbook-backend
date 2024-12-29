@@ -457,38 +457,37 @@ export class PDFGenerator {
 
     return Object.entries(groupedByDate)
       .map(([date, dayTransactions]) => {
-        const dayIn = dayTransactions
-          .filter((t) => t.type === "IN")
-          .reduce((sum, t) => sum + t.amount, 0);
-        const dayOut = dayTransactions
-          .filter((t) => t.type === "OUT")
-          .reduce((sum, t) => sum + t.amount, 0);
-        const dailyBalance = dayIn - dayOut;
-        runningBalance += dailyBalance;
+        // Sort transactions by type (IN first, then OUT)
+        const sortedTransactions = [...dayTransactions].sort((a, b) => {
+          if (a.type === "IN" && b.type === "OUT") return -1;
+          if (a.type === "OUT" && b.type === "IN") return 1;
+          return 0;
+        });
 
-        // Create rows for each transaction in the day
-        return dayTransactions
-          .map(
-            (transaction) => `
-          <tr>
-            <td>${date}</td>
-            <td>${this._getPartyName(transaction)}</td>
-            <td>${this._getPartyType(transaction)}</td>
-            <td class="amount">${
-              transaction.type === "IN"
-                ? `₹${transaction.amount.toFixed(2)}`
-                : "-"
-            }</td>
-            <td class="amount">${
-              transaction.type === "OUT"
-                ? `₹${transaction.amount.toFixed(2)}`
-                : "-"
-            }</td>
-            <td class="amount">₹${dailyBalance.toFixed(2)}</td>
-            <td class="amount">₹${runningBalance.toFixed(2)}</td>
-          </tr>
-        `
-          )
+        return sortedTransactions
+          .map((transaction, index) => {
+            const isIn = transaction.type === "IN";
+            const amount = transaction.amount;
+
+            // Update running balance
+            if (isIn) {
+              runningBalance += amount;
+            } else {
+              runningBalance -= amount;
+            }
+
+            return `
+            <tr>
+              <td>${date}</td>
+              <td>${transaction.partyName || "N/A"}</td>
+              <td>${transaction.paymentMode || "-"}</td>
+              <td class="amount">${isIn ? `₹${amount.toFixed(2)}` : "-"}</td>
+              <td class="amount">${!isIn ? `₹${amount.toFixed(2)}` : "-"}</td>
+              <td class="amount">₹${(isIn ? amount : -amount).toFixed(2)}</td>
+              <td class="amount">₹${runningBalance.toFixed(2)}</td>
+            </tr>
+          `;
+          })
           .join("");
       })
       .join("");
