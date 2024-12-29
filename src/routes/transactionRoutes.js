@@ -264,4 +264,73 @@ router.get(
   }
 );
 
+// Export all customers transactions as PDF
+router.get("/:businessId/export-all-customers-ledger", async (req, res) => {
+  try {
+    const businessInfo = BusinessModel.getById(req.params.businessId);
+    const customers = CustomerModel.getAll(req.params.businessId);
+
+    const customersData = customers.map((customer) => ({
+      info: customer,
+      transactions: TransactionModel.getTransactionsByCustomerId(
+        customer.id,
+        req.params.businessId
+      ),
+    }));
+    console.log({ customersData });
+
+    const pdf = await PDFGenerator.generateAllPartiesLedgerPDF(
+      customersData,
+      "Customer",
+      businessInfo
+    );
+
+    res.writeHead(200, {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="all-customers-ledger-${
+        new Date().toISOString().split("T")[0]
+      }.pdf"`,
+      "Content-Length": pdf.length,
+    });
+    res.end(pdf);
+  } catch (error) {
+    console.error("PDF Generation Error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Export all suppliers transactions as PDF
+router.get("/:businessId/export-all-suppliers-ledger", async (req, res) => {
+  try {
+    const businessInfo = BusinessModel.getById(req.params.businessId);
+    const suppliers = SupplierModel.getAll(req.params.businessId);
+
+    const suppliersData = suppliers.map((supplier) => ({
+      info: supplier,
+      transactions: TransactionModel.getTransactionsBySupplierId(
+        supplier.id,
+        req.params.businessId
+      ),
+    }));
+
+    const pdf = await PDFGenerator.generateAllPartiesLedgerPDF(
+      suppliersData,
+      "Supplier",
+      businessInfo
+    );
+
+    res.writeHead(200, {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="all-suppliers-ledger-${
+        new Date().toISOString().split("T")[0]
+      }.pdf"`,
+      "Content-Length": pdf.length,
+    });
+    res.end(pdf);
+  } catch (error) {
+    console.error("PDF Generation Error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;

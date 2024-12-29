@@ -395,11 +395,11 @@ export class PDFGenerator {
             <div class="summary-box">
               <div class="summary-grid">
                 <div class="summary-item">
-                  <h3>You'll Get</h3>
+                  <h3>You Got</h3>
                   <p class="get-amount">₹${totalGet.toFixed(2)}</p>
                 </div>
                 <div class="summary-item">
-                  <h3>You'll Give</h3>
+                  <h3>You Gave</h3>
                   <p class="give-amount">₹${totalGive.toFixed(2)}</p>
                 </div>
                 <div class="summary-item">
@@ -416,8 +416,8 @@ export class PDFGenerator {
                 <tr>
                   <th>Date</th>
                   <th>Description</th>
-                  <th>You'll Get</th>
-                  <th>You'll Give</th>
+                  <th>You Got</th>
+                  <th>You Gave</th>
                   <th>Running Balance</th>
                 </tr>
               </thead>
@@ -552,5 +552,235 @@ export class PDFGenerator {
       groups[date].push(transaction);
       return groups;
     }, {});
+  }
+
+  static async generateAllPartiesLedgerPDF(
+    partiesData = [],
+    businessInfo = {},
+    partyType = "Customer"
+  ) {
+    const browser = await puppeteer.launch({
+      headless: "new",
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--font-render-hinting=none",
+      ],
+    });
+
+    try {
+      const page = await browser.newPage();
+
+      // Format date properly
+      const currentDate = new Date().toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+
+      // Ensure partiesData is an array and contains valid data
+      const parties = Array.isArray(partiesData) ? partiesData : [];
+
+      // Calculate totals properly
+      let totalGet = 0;
+      let totalGive = 0;
+
+      // Process each party's transactions
+      parties.forEach((party) => {
+        // Get the actual party data
+        const partyData = party.party || party;
+        const transactions = party.transactions || [];
+
+        let partyGet = 0;
+        let partyGive = 0;
+
+        // Calculate from transactions
+        transactions.forEach((transaction) => {
+          if (transaction.type === "IN") {
+            partyGet += Number(transaction.amount) || 0;
+          } else if (transaction.type === "OUT") {
+            partyGive += Number(transaction.amount) || 0;
+          }
+        });
+
+        totalGet += partyGet;
+        totalGive += partyGive;
+      });
+
+      const netBalance = totalGet - totalGive;
+
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>
+              body { 
+                font-family: Arial, sans-serif; 
+                padding: 20px; 
+                font-size: 14px;
+                line-height: 1.6;
+                color: #333;
+              }
+              .header { 
+                text-align: center; 
+                margin-bottom: 30px; 
+              }
+              .report-title {
+                font-size: 24px;
+                font-weight: normal;
+                margin-bottom: 10px;
+                color: #333;
+              }
+              .summary-box {
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                padding: 15px;
+                margin: 20px 0;
+                display: flex;
+                justify-content: space-between;
+              }
+              .summary-item {
+                text-align: center;
+                flex: 1;
+              }
+              table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 15px;
+              }
+              th, td {
+                border: 1px solid #ddd;
+                padding: 8px;
+                text-align: left;
+              }
+              th {
+                background-color: #f8f9fa;
+                font-weight: normal;
+              }
+              .amount {
+                text-align: right;
+                font-family: monospace;
+              }
+              .get-amount { color: #16a34a; }
+              .give-amount { color: #dc2626; }
+              .net-amount { color: #9333ea; }
+              .footer {
+                margin-top: 20px;
+                color: #666;
+                font-size: 12px;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <div class="report-title">${partyType} List Report</div>
+              <div>(As of Today - ${currentDate})</div>
+            </div>
+
+            <div class="summary-box">
+              <div class="summary-item">
+                <div>You'll Get</div>
+                <div class="get-amount">₹${totalGet.toFixed(2)}</div>
+              </div>
+              <div class="summary-item">
+                <div>You'll Give</div>
+                <div class="give-amount">₹${totalGive.toFixed(2)}</div>
+              </div>
+              <div class="summary-item">
+                <div>Net Balance</div>
+                <div class="net-amount">₹${Math.abs(netBalance).toFixed(2)} ${
+        netBalance >= 0 ? "Dr" : "Cr"
+      }</div>
+              </div>
+            </div>
+
+            <div>No. of ${partyType}: ${parties.length} (All)</div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Details</th>
+                  <th>You'll Get</th>
+                  <th>You'll Give</th>
+                  <th>Collection Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${
+                  parties.length > 0
+                    ? parties
+                        .map((partyEntry) => {
+                          console.log({ partyEntry });
+                          // Get the actual party data
+                          const party = partyEntry.info || partyEntry;
+                          const transactions = partyEntry.transactions || [];
+
+                          // Calculate individual party totals
+                          let partyGet = 0;
+                          let partyGive = 0;
+
+                          transactions.forEach((transaction) => {
+                            if (transaction.type === "IN") {
+                              partyGet += Number(transaction.amount) || 0;
+                            } else if (transaction.type === "OUT") {
+                              partyGive += Number(transaction.amount) || 0;
+                            }
+                          });
+
+                          return `
+                    <tr>
+                      <td>${party.name || "-"}</td>
+                      <td>${party.phoneNumber || "-"}</td>
+                      <td class="amount">${partyGet.toFixed(2)}</td>
+                      <td class="amount">${partyGive.toFixed(2)}</td>
+                      <td>${party.createdAt || "-"}</td>
+                    </tr>
+                  `;
+                        })
+                        .join("")
+                    : `
+                  <tr>
+                    <td>N/A</td>
+                    <td></td>
+                    <td class="amount">0.00</td>
+                    <td class="amount">0.00</td>
+                    <td></td>
+                  </tr>
+                `
+                }
+                <tr style="background-color: #f8f9fa;">
+                  <td colspan="2">Grand Total</td>
+                  <td class="amount">${totalGet.toFixed(2)}</td>
+                  <td class="amount">${totalGive.toFixed(2)}</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="footer">
+              Report Generated: ${new Date().toLocaleString("en-IN")}
+            </div>
+          </body>
+        </html>
+      `;
+
+      await page.setContent(html, {
+        waitUntil: ["load", "networkidle0"],
+        timeout: 30000,
+      });
+
+      const pdf = await page.pdf({
+        format: "A4",
+        printBackground: true,
+        margin: { top: "20px", right: "20px", bottom: "20px", left: "20px" },
+        preferCSSPageSize: true,
+      });
+
+      return pdf;
+    } finally {
+      await browser.close();
+    }
   }
 }
