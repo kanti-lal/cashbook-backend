@@ -578,33 +578,26 @@ export class PDFGenerator {
         year: "numeric",
       });
 
-      // Ensure partiesData is an array and contains valid data
-      const parties = Array.isArray(partiesData) ? partiesData : [];
+      // Ensure partyType is a string
+      const displayPartyType =
+        typeof partyType === "object"
+          ? partyType?.type || partyType?.name || "Customer"
+          : partyType?.toString() || "Customer";
 
-      // Calculate totals properly
+      // Calculate totals
+      const parties = Array.isArray(partiesData) ? partiesData : [];
       let totalGet = 0;
       let totalGive = 0;
 
-      // Process each party's transactions
       parties.forEach((party) => {
-        // Get the actual party data
-        const partyData = party.party || party;
         const transactions = party.transactions || [];
-
-        let partyGet = 0;
-        let partyGive = 0;
-
-        // Calculate from transactions
         transactions.forEach((transaction) => {
           if (transaction.type === "IN") {
-            partyGet += Number(transaction.amount) || 0;
+            totalGet += Number(transaction.amount) || 0;
           } else if (transaction.type === "OUT") {
-            partyGive += Number(transaction.amount) || 0;
+            totalGive += Number(transaction.amount) || 0;
           }
         });
-
-        totalGet += partyGet;
-        totalGive += partyGive;
       });
 
       const netBalance = totalGet - totalGive;
@@ -620,89 +613,173 @@ export class PDFGenerator {
                 font-size: 14px;
                 line-height: 1.6;
                 color: #333;
+                background-color: #f9fafb;
               }
               .header { 
-                text-align: center; 
-                margin-bottom: 30px; 
-              }
-              .report-title {
-                font-size: 24px;
-                font-weight: normal;
-                margin-bottom: 10px;
-                color: #333;
-              }
-              .summary-box {
-                border: 1px solid #ddd;
+                background-color: #9333ea;
+                color: white;
+                padding: 20px;
                 border-radius: 8px;
-                padding: 15px;
-                margin: 20px 0;
+                margin-bottom: 20px;
                 display: flex;
                 justify-content: space-between;
+                align-items: center;
+              }
+              .business-name {
+                font-size: 24px;
+                font-weight: bold;
+              }
+              .header-right {
+                text-align: right;
+              }
+              .report-title {
+                font-size: 20px;
+                font-weight: 600;
+                margin: 0;
+              }
+              .date {
+                font-size: 14px;
+                margin-top: 5px;
+                opacity: 0.9;
+              }
+              .summary-box {
+                background: white;
+                border-radius: 8px;
+                padding: 20px;
+                margin: 20px 0;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                border: 1px solid #e5e7eb;
+              }
+              .summary-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 20px;
               }
               .summary-item {
+                padding: 15px;
+                border-radius: 6px;
                 text-align: center;
-                flex: 1;
+                background: #f8f9fa;
+                border: 1px solid #e5e7eb;
               }
-              table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-top: 15px;
+              .summary-item h3 {
+                margin: 0 0 10px 0;
+                color: #4b5563;
+                font-size: 14px;
+                font-weight: 600;
               }
-              th, td {
-                border: 1px solid #ddd;
-                padding: 8px;
-                text-align: left;
-              }
-              th {
-                background-color: #f8f9fa;
-                font-weight: normal;
-              }
-              .amount {
-                text-align: right;
-                font-family: monospace;
+              .summary-item .amount {
+                font-size: 20px;
+                font-weight: 700;
+                margin: 0;
               }
               .get-amount { color: #16a34a; }
               .give-amount { color: #dc2626; }
               .net-amount { color: #9333ea; }
+              .party-count {
+                font-size: 14px;
+                color: #4b5563;
+                margin: 15px 0;
+                padding: 12px;
+                background: white;
+                border-radius: 6px;
+                border: 1px solid #e5e7eb;
+              }
+              table {
+                width: 100%;
+                background: white;
+                border-radius: 8px;
+                border-collapse: separate;
+                border-spacing: 0;
+                border: 1px solid #e5e7eb;
+              }
+              th {
+                background-color: #9333ea15;
+                color: #9333ea;
+                font-weight: 600;
+                padding: 12px;
+                text-align: left;
+                font-size: 13px;
+                border-bottom: 1px solid #e5e7eb;
+              }
+              td {
+                padding: 12px;
+                border-bottom: 1px solid #e5e7eb;
+                font-size: 13px;
+              }
+              tr:last-child td {
+                border-bottom: none;
+              }
+              td:not(:last-child),
+              th:not(:last-child) {
+                border-right: 1px solid #e5e7eb;
+              }
+              .amount-cell {
+                text-align: right;
+                font-family: monospace;
+                font-size: 13px;
+              }
+              .balance-positive {
+                color: #16a34a;
+              }
+              .balance-negative {
+                color: #dc2626;
+              }
+              tr:hover {
+                background-color: #f8fafc;
+              }
               .footer {
                 margin-top: 20px;
-                color: #666;
+                padding-top: 20px;
+                color: #6b7280;
                 font-size: 12px;
+                text-align: center;
+                border-top: 1px solid #e5e7eb;
               }
             </style>
           </head>
           <body>
             <div class="header">
-              <div class="report-title">${partyType} List Report</div>
-              <div>(As of Today - ${currentDate})</div>
+              <div class="business-name">${
+                displayPartyType || "Business Name"
+              }</div>
+              <div class="header-right">
+                <div class="report-title">${businessInfo} List Report</div>
+                <div class="date">As of ${currentDate}</div>
+              </div>
             </div>
 
             <div class="summary-box">
-              <div class="summary-item">
-                <div>You Got</div>
-                <div class="get-amount">₹${totalGet.toFixed(2)}</div>
-              </div>
-              <div class="summary-item">
-                <div>You'll Gave</div>
-                <div class="give-amount">₹${totalGive.toFixed(2)}</div>
-              </div>
-              <div class="summary-item">
-                <div>Net Balance</div>
-                <div class="net-amount">₹${Math.abs(netBalance).toFixed(2)} ${
-        netBalance >= 0 ? "Dr" : "Cr"
-      }</div>
+              <div class="summary-grid">
+                <div class="summary-item">
+                  <h3>You Got</h3>
+                  <div class="amount get-amount">₹${totalGet.toFixed(2)}</div>
+                </div>
+                <div class="summary-item">
+                  <h3>You Gave</h3>
+                  <div class="amount give-amount">₹${totalGive.toFixed(2)}</div>
+                </div>
+                <div class="summary-item">
+                  <h3>Net Balance</h3>
+                  <div class="amount net-amount">₹${Math.abs(
+                    netBalance
+                  ).toFixed(2)} ${netBalance >= 0 ? "Dr" : "Cr"}</div>
+                </div>
               </div>
             </div>
 
-            <div>No. of ${partyType}: ${parties.length} (All)</div>
+            <div class="party-count">
+              Total ${businessInfo}s: ${parties.length}
+            </div>
 
             <table>
               <thead>
                 <tr>
                   <th>Name</th>
-                  <th>Details</th>
+                  <th>Phone</th>
                   <th>You Got</th>
                   <th>You Gave</th>
+                  <th>Net Balance</th>
                   <th>Collection Date</th>
                 </tr>
               </thead>
@@ -711,12 +788,9 @@ export class PDFGenerator {
                   parties.length > 0
                     ? parties
                         .map((partyEntry) => {
-                          console.log({ partyEntry });
-                          // Get the actual party data
                           const party = partyEntry.info || partyEntry;
                           const transactions = partyEntry.transactions || [];
 
-                          // Calculate individual party totals
                           let partyGet = 0;
                           let partyGive = 0;
 
@@ -728,33 +802,38 @@ export class PDFGenerator {
                             }
                           });
 
+                          const partyNetBalance = partyGet - partyGive;
+                          const balanceClass =
+                            partyNetBalance >= 0
+                              ? "balance-positive"
+                              : "balance-negative";
+
                           return `
                     <tr>
                       <td>${party.name || "-"}</td>
                       <td>${party.phoneNumber || "-"}</td>
-                      <td class="amount">${partyGet.toFixed(2)}</td>
-                      <td class="amount">${partyGive.toFixed(2)}</td>
-                      <td>${party.createdAt || "-"}</td>
+                      <td class="amount-cell">₹${partyGet.toFixed(2)}</td>
+                      <td class="amount-cell">₹${partyGive.toFixed(2)}</td>
+                      <td class="amount-cell ${balanceClass}">₹${Math.abs(
+                            partyNetBalance
+                          ).toFixed(2)} ${
+                            partyNetBalance >= 0 ? "Dr" : "Cr"
+                          }</td>
+                      <td>${
+                        party.createdAt
+                          ? new Date(party.createdAt).toLocaleDateString()
+                          : "-"
+                      }</td>
                     </tr>
                   `;
                         })
                         .join("")
                     : `
                   <tr>
-                    <td>N/A</td>
-                    <td></td>
-                    <td class="amount">0.00</td>
-                    <td class="amount">0.00</td>
-                    <td></td>
+                    <td colspan="6" style="text-align: center; padding: 20px;">No ${displayPartyType}s found</td>
                   </tr>
                 `
                 }
-                <tr style="background-color: #f8f9fa;">
-                  <td colspan="2">Grand Total</td>
-                  <td class="amount">${totalGet.toFixed(2)}</td>
-                  <td class="amount">${totalGive.toFixed(2)}</td>
-                  <td></td>
-                </tr>
               </tbody>
             </table>
 
