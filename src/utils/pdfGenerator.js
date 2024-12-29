@@ -679,11 +679,11 @@ export class PDFGenerator {
 
             <div class="summary-box">
               <div class="summary-item">
-                <div>You'll Get</div>
+                <div>You Got</div>
                 <div class="get-amount">₹${totalGet.toFixed(2)}</div>
               </div>
               <div class="summary-item">
-                <div>You'll Give</div>
+                <div>You'll Gave</div>
                 <div class="give-amount">₹${totalGive.toFixed(2)}</div>
               </div>
               <div class="summary-item">
@@ -701,8 +701,8 @@ export class PDFGenerator {
                 <tr>
                   <th>Name</th>
                   <th>Details</th>
-                  <th>You'll Get</th>
-                  <th>You'll Give</th>
+                  <th>You Got</th>
+                  <th>You Gave</th>
                   <th>Collection Date</th>
                 </tr>
               </thead>
