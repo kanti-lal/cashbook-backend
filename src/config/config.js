@@ -30,4 +30,10 @@ export const config = {
     timeout: 10000,
     verbose: process.env.NODE_ENV === "development" ? console.log : null,
   },
+  email: {
+    user: process.env.SMTP_USER,
+    appPassword: process.env.SMTP_PASS,
+  },
+  appUrl: process.env.FRONTEND_URL,
+  brandName: process.env.BRAND_NAME,
 };

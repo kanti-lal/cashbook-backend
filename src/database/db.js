@@ -28,6 +28,36 @@ export function getDb() {
       db.pragma("foreign_keys = ON");
       db.pragma("busy_timeout = 5000");
 
+      // Add reset token fields if they don't exist
+      db.prepare(
+        `
+        CREATE TABLE IF NOT EXISTS users (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          email TEXT UNIQUE NOT NULL,
+          password TEXT NOT NULL,
+          mobile TEXT,
+          address TEXT,
+          date_of_birth TEXT,
+          reset_token TEXT,
+          reset_token_expiry DATETIME
+        )
+      `
+      ).run();
+
+      // Add columns if they don't exist (for existing tables)
+      const columns = db.prepare(`PRAGMA table_info(users)`).all();
+      const columnNames = columns.map((col) => col.name);
+
+      if (!columnNames.includes("reset_token")) {
+        db.prepare("ALTER TABLE users ADD COLUMN reset_token TEXT").run();
+      }
+      if (!columnNames.includes("reset_token_expiry")) {
+        db.prepare(
+          "ALTER TABLE users ADD COLUMN reset_token_expiry DATETIME"
+        ).run();
+      }
+
       console.log("Database connected successfully");
     } catch (error) {
       console.error("Database connection error:", error);
