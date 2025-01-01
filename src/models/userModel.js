@@ -118,6 +118,11 @@ export class UserModel {
         throw new Error("User not found");
       }
 
+      // Check if user is blocked
+      if (user.is_blocked) {
+        throw new Error("Account is blocked. Please contact administrator.");
+      }
+
       // Verify password
       const validPassword = await bcrypt.compare(password, user.password);
       if (!validPassword) {
@@ -130,6 +135,11 @@ export class UserModel {
         config.jwtSecret,
         { expiresIn: "24h" }
       );
+
+      // Update last login
+      db.prepare(
+        "UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?"
+      ).run(user.id);
 
       return {
         token,
@@ -229,5 +239,85 @@ export class UserModel {
 
     db.close();
     return true;
+  }
+
+  static async getAllUsers() {
+    const db = getDb();
+    try {
+      const users = db
+        .prepare(
+          `
+          SELECT id, email, name, mobile, address, dateOfBirth 
+          FROM users
+        `
+        )
+        .all();
+      return users;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async blockUser(userId) {
+    const db = getDb();
+    try {
+      const result = db
+        .prepare("UPDATE users SET is_blocked = 1 WHERE id = ?")
+        .run(userId);
+      return result.changes > 0;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async unblockUser(userId) {
+    const db = getDb();
+    try {
+      const result = db
+        .prepare("UPDATE users SET is_blocked = 0 WHERE id = ?")
+        .run(userId);
+      return result.changes > 0;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async deleteUser(userId) {
+    const db = getDb();
+    try {
+      const result = db.prepare("DELETE FROM users WHERE id = ?").run(userId);
+      return result.changes > 0;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async adminLogin({ email, password }) {
+    if (email !== "krantijangid56@gmail.com") {
+      throw new Error("Invalid admin credentials");
+    }
+
+    const hashedAdminPassword = await bcrypt.hash("Kanti@123", 10); // In production, store this in env
+    const validPassword = await bcrypt.compare(password, hashedAdminPassword);
+
+    if (!validPassword) {
+      throw new Error("Invalid admin credentials");
+    }
+
+    // Generate admin JWT token
+    const token = jwt.sign(
+      { id: "admin", email, isAdmin: true },
+      config.jwtSecret,
+      { expiresIn: "24h" }
+    );
+
+    return {
+      token,
+      user: {
+        id: "admin",
+        email,
+        isAdmin: true,
+      },
+    };
   }
 }

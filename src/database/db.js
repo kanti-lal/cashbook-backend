@@ -63,3 +63,37 @@ process.on("uncaughtException", (error) => {
   console.error("Uncaught Exception:", error);
   cleanup();
 });
+
+export function addAdminColumns() {
+  const db = getDb();
+
+  try {
+    // Check if columns exist first to avoid errors
+    const tableInfo = db.prepare("PRAGMA table_info(users)").all();
+    const columns = tableInfo.map((col) => col.name);
+
+    // Add is_blocked column if it doesn't exist
+    if (!columns.includes("is_blocked")) {
+      db.prepare(
+        "ALTER TABLE users ADD COLUMN is_blocked INTEGER DEFAULT 0"
+      ).run();
+    }
+
+    // Add last_login column if it doesn't exist
+    if (!columns.includes("last_login")) {
+      db.prepare("ALTER TABLE users ADD COLUMN last_login DATETIME").run();
+    }
+
+    // Add created_at column if it doesn't exist
+    if (!columns.includes("created_at")) {
+      db.prepare(
+        "ALTER TABLE users ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP"
+      ).run();
+    }
+
+    console.log("Admin columns added successfully");
+  } catch (error) {
+    console.error("Error adding admin columns:", error);
+    throw error;
+  }
+}
