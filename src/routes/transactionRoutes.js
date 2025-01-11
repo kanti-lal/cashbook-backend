@@ -173,23 +173,19 @@ router.get("/:businessId/export-transactions", async (req, res) => {
     );
     const businessInfo = BusinessModel.getById(req.params.businessId);
 
-    const buffer = await PDFGenerator.generateTransactionsPDF(
+    const pdf = await PDFGenerator.generateTransactionsPDF(
       transactions,
       businessInfo
     );
 
-    // Set binary response type
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename="transactions-${
+    res.writeHead(200, {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="transactions-${
         new Date().toISOString().split("T")[0]
-      }.pdf"`
-    );
-    res.setHeader("Content-Length", buffer.length);
-
-    // Send binary data
-    res.end(buffer, "binary");
+      }.pdf"`,
+      "Content-Length": pdf.length,
+    });
+    res.end(pdf);
   } catch (error) {
     console.error("PDF Generation Error:", error);
     res.status(500).json({ error: error.message });
@@ -211,22 +207,20 @@ router.get(
       );
       const businessInfo = BusinessModel.getById(req.params.businessId);
 
-      const buffer = await PDFGenerator.generatePartyLedgerPDF(
+      const pdf = await PDFGenerator.generatePartyLedgerPDF(
         transactions,
         { ...customerInfo, type: "Customer" },
         businessInfo
       );
 
-      res.set({
+      res.writeHead(200, {
         "Content-Type": "application/pdf",
-        "Content-Length": buffer.length,
         "Content-Disposition": `attachment; filename="customer-ledger-${
           req.params.customerId
         }-${new Date().toISOString().split("T")[0]}.pdf"`,
-        "Cache-Control": "no-cache",
+        "Content-Length": pdf.length,
       });
-
-      res.send(buffer);
+      res.end(pdf);
     } catch (error) {
       console.error("PDF Generation Error:", error);
       res.status(500).json({ error: error.message });
@@ -249,27 +243,94 @@ router.get(
       );
       const businessInfo = BusinessModel.getById(req.params.businessId);
 
-      const buffer = await PDFGenerator.generatePartyLedgerPDF(
+      const pdf = await PDFGenerator.generatePartyLedgerPDF(
         transactions,
         { ...supplierInfo, type: "Supplier" },
         businessInfo
       );
 
-      res.set({
+      res.writeHead(200, {
         "Content-Type": "application/pdf",
-        "Content-Length": buffer.length,
         "Content-Disposition": `attachment; filename="supplier-ledger-${
           req.params.supplierId
         }-${new Date().toISOString().split("T")[0]}.pdf"`,
-        "Cache-Control": "no-cache",
+        "Content-Length": pdf.length,
       });
-
-      res.send(buffer);
+      res.end(pdf);
     } catch (error) {
       console.error("PDF Generation Error:", error);
       res.status(500).json({ error: error.message });
     }
   }
 );
+
+// Export all customers transactions as PDF
+router.get("/:businessId/export-all-customers-ledger", async (req, res) => {
+  try {
+    const businessInfo = BusinessModel.getById(req.params.businessId);
+    const customers = CustomerModel.getAll(req.params.businessId);
+
+    const customersData = customers.map((customer) => ({
+      info: customer,
+      transactions: TransactionModel.getTransactionsByCustomerId(
+        customer.id,
+        req.params.businessId
+      ),
+    }));
+    console.log({ customersData });
+
+    const pdf = await PDFGenerator.generateAllPartiesLedgerPDF(
+      customersData,
+      "Customer",
+      businessInfo
+    );
+
+    res.writeHead(200, {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="all-customers-ledger-${
+        new Date().toISOString().split("T")[0]
+      }.pdf"`,
+      "Content-Length": pdf.length,
+    });
+    res.end(pdf);
+  } catch (error) {
+    console.error("PDF Generation Error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Export all suppliers transactions as PDF
+router.get("/:businessId/export-all-suppliers-ledger", async (req, res) => {
+  try {
+    const businessInfo = BusinessModel.getById(req.params.businessId);
+    const suppliers = SupplierModel.getAll(req.params.businessId);
+
+    const suppliersData = suppliers.map((supplier) => ({
+      info: supplier,
+      transactions: TransactionModel.getTransactionsBySupplierId(
+        supplier.id,
+        req.params.businessId
+      ),
+    }));
+
+    const pdf = await PDFGenerator.generateAllPartiesLedgerPDF(
+      suppliersData,
+      "Supplier",
+      businessInfo
+    );
+
+    res.writeHead(200, {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="all-suppliers-ledger-${
+        new Date().toISOString().split("T")[0]
+      }.pdf"`,
+      "Content-Length": pdf.length,
+    });
+    res.end(pdf);
+  } catch (error) {
+    console.error("PDF Generation Error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 export default router;

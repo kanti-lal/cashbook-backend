@@ -25,7 +25,10 @@ router.post(
       }
 
       const user = await UserModel.create(req.body);
-      res.status(201).json(user);
+      res.status(201).json({
+        message: "Registration successful. Please login to continue.",
+        user,
+      });
     } catch (error) {
       if (error.message === "User already exists") {
         return res.status(409).json({ message: error.message });

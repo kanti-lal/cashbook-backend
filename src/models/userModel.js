@@ -145,9 +145,9 @@ export class UserModel {
   }
 
   static async createResetToken(email) {
-    const db = new Database(config.dbPath);
+    const db = getDb();
 
-    // Find user
+    // Check if user exists
     const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
     if (!user) {
       throw new Error("User not found");
@@ -155,33 +155,33 @@ export class UserModel {
 
     // Generate reset token
     const resetToken = crypto.randomBytes(32).toString("hex");
-    const resetTokenExpiry = new Date(Date.now() + 3600000).toISOString(); // 1 hour
+    const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
 
-    // Save reset token
+    // Store reset token in database
     db.prepare(
       `
       UPDATE users 
-      SET resetToken = ?, resetTokenExpiry = ? 
-      WHERE id = ?
+      SET reset_token = ?, reset_token_expiry = ? 
+      WHERE email = ?
     `
-    ).run(resetToken, resetTokenExpiry, user.id);
+    ).run(resetToken, resetTokenExpiry.toISOString(), email);
 
-    db.close();
     return { resetToken, email };
   }
 
   static async resetPassword({ token, password }) {
-    const db = new Database(config.dbPath);
+    const db = getDb();
 
     // Find user with valid reset token
     const user = db
       .prepare(
         `
       SELECT * FROM users 
-      WHERE resetToken = ? AND resetTokenExpiry > ?
+      WHERE reset_token = ? 
+      AND reset_token_expiry > datetime('now')
     `
       )
-      .get(token, new Date().toISOString());
+      .get(token);
 
     if (!user) {
       throw new Error("Invalid or expired reset token");
@@ -194,12 +194,11 @@ export class UserModel {
     db.prepare(
       `
       UPDATE users 
-      SET password = ?, resetToken = NULL, resetTokenExpiry = NULL 
+      SET password = ?, reset_token = NULL, reset_token_expiry = NULL 
       WHERE id = ?
     `
     ).run(hashedPassword, user.id);
 
-    db.close();
     return true;
   }
 
