@@ -6,8 +6,9 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "build": "if not exist dist mkdir dist && xcopy /s /y src\\* dist\\ && copy package.json dist\\ && copy .env dist\\",
-    "clean": "if exist dist rmdir /s /q dist"
+    "build": "mkdir -p dist && cp -r src/* dist/ && cp package.json dist/ && cp .env dist/",
+    "build:windows": "if not exist dist mkdir dist && xcopy /s /y src\\* dist\\ && copy package.json dist\\ && copy .env dist\\",
+    "clean": "rm -rf dist"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
