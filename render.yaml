@@ -2,10 +2,17 @@ services:
   - type: web
     name: cashbook-backend
     env: node
-    buildCommand: npm install && npm run build
+    plan: free
+    buildCommand: npm ci && npm run build
     startCommand: node src/index.js
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
-        value: 3000 
+        value: 3000
+      - key: DATABASE_FILE
+        value: /data/cashlink.db
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1 
