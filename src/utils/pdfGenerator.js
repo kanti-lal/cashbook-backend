@@ -1,10 +1,41 @@
 import puppeteer from "puppeteer";
 
+const CHROME_PATH =
+  process.env.NODE_ENV === "production"
+    ? "/usr/bin/chromium-browser"
+    : puppeteer.executablePath();
+
 export class PDFGenerator {
+  static async launchBrowser() {
+    try {
+      console.log("Attempting to launch Chrome from:", CHROME_PATH);
+      const browser = await puppeteer.launch({
+        headless: "new",
+        args: [
+          "--no-sandbox",
+          "--disable-setuid-sandbox",
+          "--disable-dev-shm-usage",
+          "--font-render-hinting=none",
+          "--disable-gpu",
+          "--disable-software-rasterizer",
+          "--headless",
+          "--hide-scrollbars",
+          "--disable-web-security",
+        ],
+        executablePath: CHROME_PATH,
+      });
+      return browser;
+    } catch (error) {
+      console.error("Chrome launch error:", error);
+      console.error("Attempted Chrome path:", CHROME_PATH);
+      throw new Error(`Failed to launch Chrome: ${error.message}`);
+    }
+  }
+
   static async generateTransactionsPDF(transactions, businessInfo) {
-    // Launch browser with specific configurations
     const browser = await puppeteer.launch({
       headless: "new",
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || null,
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
@@ -217,6 +248,7 @@ export class PDFGenerator {
   static async generatePartyLedgerPDF(transactions, partyInfo, businessInfo) {
     const browser = await puppeteer.launch({
       headless: "new",
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || null,
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
@@ -560,6 +592,7 @@ export class PDFGenerator {
   ) {
     const browser = await puppeteer.launch({
       headless: "new",
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || null,
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
