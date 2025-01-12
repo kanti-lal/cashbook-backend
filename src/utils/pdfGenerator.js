@@ -2,27 +2,37 @@ import puppeteer from "puppeteer";
 
 const CHROME_PATH =
   process.env.NODE_ENV === "production"
-    ? "/usr/bin/chromium" // Changed from chromium-browser to chromium
+    ? process.env.CHROME_PATH || "/usr/bin/chromium"
     : puppeteer.executablePath();
 
 export class PDFGenerator {
+  static async launchBrowser() {
+    try {
+      const browser = await puppeteer.launch({
+        headless: "new",
+        args: [
+          "--no-sandbox",
+          "--disable-setuid-sandbox",
+          "--disable-dev-shm-usage",
+          "--font-render-hinting=none",
+          "--disable-gpu",
+          "--disable-software-rasterizer",
+          "--headless",
+          "--hide-scrollbars",
+          "--disable-web-security",
+        ],
+        executablePath: CHROME_PATH,
+      });
+      return browser;
+    } catch (error) {
+      console.error("Chrome launch error:", error);
+      console.error("Attempted Chrome path:", CHROME_PATH);
+      throw new Error(`Failed to launch Chrome: ${error.message}`);
+    }
+  }
+
   static async generateTransactionsPDF(transactions, businessInfo) {
-    // Launch browser with specific configurations
-    const browser = await puppeteer.launch({
-      headless: "new",
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--font-render-hinting=none",
-        "--disable-gpu",
-        "--disable-software-rasterizer",
-        "--headless",
-        "--hide-scrollbars",
-        "--disable-web-security",
-      ],
-      executablePath: CHROME_PATH,
-    });
+    const browser = await this.launchBrowser();
 
     try {
       const page = await browser.newPage();
@@ -226,21 +236,7 @@ export class PDFGenerator {
   }
 
   static async generatePartyLedgerPDF(transactions, partyInfo, businessInfo) {
-    const browser = await puppeteer.launch({
-      headless: "new",
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--font-render-hinting=none",
-        "--disable-gpu",
-        "--disable-software-rasterizer",
-        "--headless",
-        "--hide-scrollbars",
-        "--disable-web-security",
-      ],
-      executablePath: CHROME_PATH,
-    });
+    const browser = await this.launchBrowser();
 
     try {
       const page = await browser.newPage();
@@ -575,21 +571,7 @@ export class PDFGenerator {
     businessInfo = {},
     partyType = "Customer"
   ) {
-    const browser = await puppeteer.launch({
-      headless: "new",
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--font-render-hinting=none",
-        "--disable-gpu",
-        "--disable-software-rasterizer",
-        "--headless",
-        "--hide-scrollbars",
-        "--disable-web-security",
-      ],
-      executablePath: CHROME_PATH,
-    });
+    const browser = await this.launchBrowser();
 
     try {
       const page = await browser.newPage();
