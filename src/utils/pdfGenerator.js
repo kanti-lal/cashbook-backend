@@ -1,5 +1,10 @@
 import puppeteer from "puppeteer";
 
+const CHROME_PATH =
+  process.env.NODE_ENV === "production"
+    ? "/usr/bin/chromium" // Changed from chromium-browser to chromium
+    : puppeteer.executablePath();
+
 export class PDFGenerator {
   static async generateTransactionsPDF(transactions, businessInfo) {
     // Launch browser with specific configurations
@@ -16,10 +21,7 @@ export class PDFGenerator {
         "--hide-scrollbars",
         "--disable-web-security",
       ],
-      executablePath:
-        process.env.NODE_ENV === "production"
-          ? "/usr/bin/chromium-browser" // or '/usr/bin/google-chrome'
-          : puppeteer.executablePath(),
+      executablePath: CHROME_PATH,
     });
 
     try {
@@ -237,10 +239,7 @@ export class PDFGenerator {
         "--hide-scrollbars",
         "--disable-web-security",
       ],
-      executablePath:
-        process.env.NODE_ENV === "production"
-          ? "/usr/bin/chromium-browser" // or '/usr/bin/google-chrome'
-          : puppeteer.executablePath(),
+      executablePath: CHROME_PATH,
     });
 
     try {
@@ -589,10 +588,7 @@ export class PDFGenerator {
         "--hide-scrollbars",
         "--disable-web-security",
       ],
-      executablePath:
-        process.env.NODE_ENV === "production"
-          ? "/usr/bin/chromium-browser" // or '/usr/bin/google-chrome'
-          : puppeteer.executablePath(),
+      executablePath: CHROME_PATH,
     });
 
     try {
