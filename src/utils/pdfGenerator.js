@@ -6,29 +6,32 @@ const CHROME_PATH =
     : puppeteer.executablePath();
 
 export class PDFGenerator {
-  static async launchBrowser() {
+  static async _launchBrowser() {
+    console.log("Attempting to launch browser...");
+    const options = {
+      headless: "new",
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+        "--font-render-hinting=none",
+      ],
+    };
+
     try {
-      console.log("Attempting to launch Chrome from:", CHROME_PATH);
-      const browser = await puppeteer.launch({
-        headless: "new",
-        args: [
-          "--no-sandbox",
-          "--disable-setuid-sandbox",
-          "--disable-dev-shm-usage",
-          "--font-render-hinting=none",
-          "--disable-gpu",
-          "--disable-software-rasterizer",
-          "--headless",
-          "--hide-scrollbars",
-          "--disable-web-security",
-        ],
-        executablePath: CHROME_PATH,
-      });
+      console.log("Launch options:", JSON.stringify(options));
+      const browser = await puppeteer.launch(options);
+      console.log("Browser launched successfully");
       return browser;
     } catch (error) {
-      console.error("Chrome launch error:", error);
-      console.error("Attempted Chrome path:", CHROME_PATH);
-      throw new Error(`Failed to launch Chrome: ${error.message}`);
+      console.error("Browser launch failed:", error);
+      console.error("Error details:", {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+      });
+      throw new Error(`Browser launch failed: ${error.message}`);
     }
   }
 
