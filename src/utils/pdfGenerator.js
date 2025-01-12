@@ -10,7 +10,16 @@ export class PDFGenerator {
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
         "--font-render-hinting=none",
+        "--disable-gpu",
+        "--disable-software-rasterizer",
+        "--headless",
+        "--hide-scrollbars",
+        "--disable-web-security",
       ],
+      executablePath:
+        process.env.NODE_ENV === "production"
+          ? "/usr/bin/chromium-browser" // or '/usr/bin/google-chrome'
+          : puppeteer.executablePath(),
     });
 
     try {
@@ -222,7 +231,16 @@ export class PDFGenerator {
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
         "--font-render-hinting=none",
+        "--disable-gpu",
+        "--disable-software-rasterizer",
+        "--headless",
+        "--hide-scrollbars",
+        "--disable-web-security",
       ],
+      executablePath:
+        process.env.NODE_ENV === "production"
+          ? "/usr/bin/chromium-browser" // or '/usr/bin/google-chrome'
+          : puppeteer.executablePath(),
     });
 
     try {
@@ -565,7 +583,16 @@ export class PDFGenerator {
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
         "--font-render-hinting=none",
+        "--disable-gpu",
+        "--disable-software-rasterizer",
+        "--headless",
+        "--hide-scrollbars",
+        "--disable-web-security",
       ],
+      executablePath:
+        process.env.NODE_ENV === "production"
+          ? "/usr/bin/chromium-browser" // or '/usr/bin/google-chrome'
+          : puppeteer.executablePath(),
     });
 
     try {
