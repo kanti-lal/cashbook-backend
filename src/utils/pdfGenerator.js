@@ -2,12 +2,13 @@ import puppeteer from "puppeteer";
 
 const CHROME_PATH =
   process.env.NODE_ENV === "production"
-    ? process.env.CHROME_PATH || "/usr/bin/chromium"
+    ? "/usr/bin/chromium-browser"
     : puppeteer.executablePath();
 
 export class PDFGenerator {
   static async launchBrowser() {
     try {
+      console.log("Attempting to launch Chrome from:", CHROME_PATH);
       const browser = await puppeteer.launch({
         headless: "new",
         args: [
@@ -23,6 +24,7 @@ export class PDFGenerator {
         ],
         executablePath: CHROME_PATH,
       });
+      console.log("Chrome launched successfully");
       return browser;
     } catch (error) {
       console.error("Chrome launch error:", error);
