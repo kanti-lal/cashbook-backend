@@ -11,9 +11,9 @@ export class PDFGenerator {
         "--disable-dev-shm-usage",
         "--font-render-hinting=none",
         "--disable-gpu",
+        "--disable-software-rasterizer",
+        "--disable-features=IsolateOrigins,site-per-process",
       ],
-      executablePath:
-        process.env.CHROME_PATH || "/usr/bin/google-chrome-stable",
     });
 
     try {
@@ -226,9 +226,9 @@ export class PDFGenerator {
         "--disable-dev-shm-usage",
         "--font-render-hinting=none",
         "--disable-gpu",
+        "--disable-software-rasterizer",
+        "--disable-features=IsolateOrigins,site-per-process",
       ],
-      executablePath:
-        process.env.CHROME_PATH || "/usr/bin/google-chrome-stable",
     });
 
     try {
@@ -572,9 +572,9 @@ export class PDFGenerator {
         "--disable-dev-shm-usage",
         "--font-render-hinting=none",
         "--disable-gpu",
+        "--disable-software-rasterizer",
+        "--disable-features=IsolateOrigins,site-per-process",
       ],
-      executablePath:
-        process.env.CHROME_PATH || "/usr/bin/google-chrome-stable",
     });
 
     try {
