@@ -18,8 +18,8 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 COPY .env* ./
 
-# Install dependencies
-RUN npm ci
+# Install production dependencies only
+RUN npm ci --only=production
 
 # Copy source code
 COPY . .
@@ -30,5 +30,5 @@ RUN npm run build
 # Expose port
 EXPOSE 3000
 
-# Start command
-CMD [ "npm", "run", "dev" ] 
+# Start command for production
+CMD [ "npm", "start" ] 
