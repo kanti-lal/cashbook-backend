@@ -1,50 +1,18 @@
 import puppeteer from "puppeteer";
 
-const CHROME_PATH =
-  process.env.NODE_ENV === "production"
-    ? "/usr/bin/chromium-browser"
-    : puppeteer.executablePath();
-
 export class PDFGenerator {
-  static async _launchBrowser() {
-    console.log("Attempting to launch browser...");
-    const options = {
-      headless: "new",
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-gpu",
-        "--font-render-hinting=none",
-      ],
-    };
-
-    try {
-      console.log("Launch options:", JSON.stringify(options));
-      const browser = await puppeteer.launch(options);
-      console.log("Browser launched successfully");
-      return browser;
-    } catch (error) {
-      console.error("Browser launch failed:", error);
-      console.error("Error details:", {
-        message: error.message,
-        stack: error.stack,
-        name: error.name,
-      });
-      throw new Error(`Browser launch failed: ${error.message}`);
-    }
-  }
-
   static async generateTransactionsPDF(transactions, businessInfo) {
+    // Launch browser with specific configurations
     const browser = await puppeteer.launch({
       headless: "new",
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || null,
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
         "--font-render-hinting=none",
+        "--disable-gpu",
       ],
+      executablePath: process.env.CHROME_PATH || null,
     });
 
     try {
@@ -251,13 +219,14 @@ export class PDFGenerator {
   static async generatePartyLedgerPDF(transactions, partyInfo, businessInfo) {
     const browser = await puppeteer.launch({
       headless: "new",
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || null,
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
         "--font-render-hinting=none",
+        "--disable-gpu",
       ],
+      executablePath: process.env.CHROME_PATH || null,
     });
 
     try {
@@ -595,13 +564,14 @@ export class PDFGenerator {
   ) {
     const browser = await puppeteer.launch({
       headless: "new",
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || null,
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
         "--font-render-hinting=none",
+        "--disable-gpu",
       ],
+      executablePath: process.env.CHROME_PATH || null,
     });
 
     try {

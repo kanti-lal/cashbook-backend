@@ -1,0 +1,17 @@
+version: "3.8"
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src:/usr/src/app/src
+      - ./data:/data
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - DATABASE_FILE=/data/cashlink.db
+      - PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+      - CHROME_PATH=/usr/bin/google-chrome-stable
+
+    command: npm run dev
