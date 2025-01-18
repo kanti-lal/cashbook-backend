@@ -13,7 +13,7 @@ services:
       - key: DATABASE_FILE
         value: /data/cashlink.db
       - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
-        value: "false"
+        value: "true"
       - key: CHROME_PATH
         value: "/usr/bin/google-chrome-stable"
     disk:
