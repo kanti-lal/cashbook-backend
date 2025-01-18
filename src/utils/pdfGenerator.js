@@ -10,7 +10,9 @@ export class PDFGenerator {
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
         "--font-render-hinting=none",
+        "--disable-gpu",
       ],
+      executablePath: process.env.CHROME_PATH || null,
     });
 
     try {
@@ -222,7 +224,9 @@ export class PDFGenerator {
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
         "--font-render-hinting=none",
+        "--disable-gpu",
       ],
+      executablePath: process.env.CHROME_PATH || null,
     });
 
     try {
@@ -565,7 +569,9 @@ export class PDFGenerator {
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
         "--font-render-hinting=none",
+        "--disable-gpu",
       ],
+      executablePath: process.env.CHROME_PATH || null,
     });
 
     try {
