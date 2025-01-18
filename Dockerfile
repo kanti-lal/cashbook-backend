@@ -16,19 +16,23 @@ WORKDIR /usr/src/app
 
 # Copy package files
 COPY package*.json ./
-COPY .env* ./
 
 # Install production dependencies only
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
 # Copy source code
 COPY . .
 
-# Build the application
-RUN npm run build
+# Create dist directory and copy files
+RUN mkdir -p dist && \
+    cp -r src/* dist/ && \
+    cp package.json dist/
 
 # Expose port
 EXPOSE 3000
 
+# Set NODE_ENV
+ENV NODE_ENV=production
+
 # Start command for production
-CMD [ "npm", "start" ] 
+CMD ["node", "dist/index.js"] 
