@@ -12,7 +12,8 @@ export class PDFGenerator {
         "--font-render-hinting=none",
         "--disable-gpu",
       ],
-      executablePath: process.env.CHROME_PATH || null,
+      executablePath:
+        process.env.CHROME_PATH || "/usr/bin/google-chrome-stable",
     });
 
     try {
@@ -226,7 +227,8 @@ export class PDFGenerator {
         "--font-render-hinting=none",
         "--disable-gpu",
       ],
-      executablePath: process.env.CHROME_PATH || null,
+      executablePath:
+        process.env.CHROME_PATH || "/usr/bin/google-chrome-stable",
     });
 
     try {
@@ -571,7 +573,8 @@ export class PDFGenerator {
         "--font-render-hinting=none",
         "--disable-gpu",
       ],
-      executablePath: process.env.CHROME_PATH || null,
+      executablePath:
+        process.env.CHROME_PATH || "/usr/bin/google-chrome-stable",
     });
 
     try {
