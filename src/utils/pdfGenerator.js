@@ -3,17 +3,21 @@ import puppeteer from "puppeteer";
 export class PDFGenerator {
   static async generateTransactionsPDF(transactions, businessInfo) {
     // Launch browser with specific configurations
+    // const browser = await puppeteer.launch({
+    //   headless: "new",
+    //   args: [
+    //     "--no-sandbox",
+    //     "--disable-setuid-sandbox",
+    //     "--disable-dev-shm-usage",
+    //     "--font-render-hinting=none",
+    //     "--disable-gpu",
+    //   ],
+    //   executablePath:
+    //     process.env.CHROME_PATH || "/usr/bin/google-chrome-stable",
+    // });
     const browser = await puppeteer.launch({
-      headless: "new",
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--font-render-hinting=none",
-        "--disable-gpu",
-        "--disable-software-rasterizer",
-        "--disable-features=IsolateOrigins,site-per-process",
-      ],
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
 
     try {
@@ -226,9 +230,9 @@ export class PDFGenerator {
         "--disable-dev-shm-usage",
         "--font-render-hinting=none",
         "--disable-gpu",
-        "--disable-software-rasterizer",
-        "--disable-features=IsolateOrigins,site-per-process",
       ],
+      executablePath:
+        process.env.CHROME_PATH || "/usr/bin/google-chrome-stable",
     });
 
     try {
@@ -572,9 +576,8 @@ export class PDFGenerator {
         "--disable-dev-shm-usage",
         "--font-render-hinting=none",
         "--disable-gpu",
-        "--disable-software-rasterizer",
-        "--disable-features=IsolateOrigins,site-per-process",
       ],
+      executablePath: process.env.CHROME_PATH || null,
     });
 
     try {
