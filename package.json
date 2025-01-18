@@ -22,11 +22,11 @@
     "moment": "^2.29.4",
     "morgan": "^1.10.0",
     "nodemailer": "^6.9.7",
+    "nodemon": "^3.1.9",
     "puppeteer": "^23.11.1",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.12",
-    "nodemon": "^3.1.9"
+    "@types/better-sqlite3": "^7.6.12"
   }
 }
