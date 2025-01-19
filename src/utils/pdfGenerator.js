@@ -1,6 +1,35 @@
-import puppeteer from "puppeteer";
+import chromium from "@sparticuz/chromium";
+import puppeteer from "puppeteer-core";
 
 export class PDFGenerator {
+  static async _getBrowser() {
+    const isProduction = process.env.NODE_ENV === "production";
+
+    if (isProduction) {
+      // Production (Render.com) configuration
+      return await puppeteer.launch({
+        args: chromium.args,
+        defaultViewport: chromium.defaultViewport,
+        executablePath: await chromium.executablePath(),
+        headless: chromium.headless,
+        ignoreHTTPSErrors: true,
+      });
+    } else {
+      // Local development configuration
+      return await puppeteer.launch({
+        headless: "new",
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+        // Use local Chrome for development
+        executablePath:
+          process.platform === "win32"
+            ? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+            : process.platform === "darwin"
+            ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+            : "/usr/bin/google-chrome",
+      });
+    }
+  }
+
   static async generateTransactionsPDF(transactions, businessInfo) {
     // Launch browser with specific configurations
     // const browser = await puppeteer.launch({
@@ -10,17 +39,12 @@ export class PDFGenerator {
     //     "--disable-setuid-sandbox",
     //     "--disable-dev-shm-usage",
     //     "--font-render-hinting=none",
-    //     "--disable-gpu",
     //   ],
-    //   executablePath:
-    //     process.env.CHROME_PATH || "/usr/bin/google-chrome-stable",
     // });
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    });
-
+    let browser = null;
     try {
+      browser = await this._getBrowser();
+
       const page = await browser.newPage();
 
       // Set content security policy
@@ -216,26 +240,30 @@ export class PDFGenerator {
       });
 
       return buffer;
+    } catch (error) {
+      console.error("PDF Generation Error:", error);
+      throw new Error(`Failed to generate PDF: ${error.message}`);
     } finally {
-      await browser.close();
+      if (browser) {
+        await browser.close();
+      }
     }
   }
 
   static async generatePartyLedgerPDF(transactions, partyInfo, businessInfo) {
-    const browser = await puppeteer.launch({
-      headless: "new",
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--font-render-hinting=none",
-        "--disable-gpu",
-      ],
-      executablePath:
-        process.env.CHROME_PATH || "/usr/bin/google-chrome-stable",
-    });
+    // const browser = await puppeteer.launch({
+    //   headless: "new",
+    //   args: [
+    //     "--no-sandbox",
+    //     "--disable-setuid-sandbox",
+    //     "--disable-dev-shm-usage",
+    //     "--font-render-hinting=none",
+    //   ],
+    // });
+    let browser = null;
 
     try {
+      browser = await this._getBrowser();
       const page = await browser.newPage();
 
       const totalGet = transactions
@@ -456,8 +484,13 @@ export class PDFGenerator {
       });
 
       return pdf;
+    } catch (error) {
+      console.error("PDF Generation Error:", error);
+      throw new Error(`Failed to generate PDF: ${error.message}`);
     } finally {
-      await browser.close();
+      if (browser) {
+        await browser.close();
+      }
     }
   }
 
@@ -568,19 +601,20 @@ export class PDFGenerator {
     businessInfo = {},
     partyType = "Customer"
   ) {
-    const browser = await puppeteer.launch({
-      headless: "new",
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--font-render-hinting=none",
-        "--disable-gpu",
-      ],
-      executablePath: process.env.CHROME_PATH || null,
-    });
+    // const browser = await puppeteer.launch({
+    //   headless: "new",
+    //   args: [
+    //     "--no-sandbox",
+    //     "--disable-setuid-sandbox",
+    //     "--disable-dev-shm-usage",
+    //     "--font-render-hinting=none",
+    //   ],
+    // });
+    let browser = null;
 
     try {
+      browser = await this._getBrowser();
+
       const page = await browser.newPage();
 
       // Format date properly
@@ -869,8 +903,13 @@ export class PDFGenerator {
       });
 
       return pdf;
+    } catch (error) {
+      console.error("PDF Generation Error:", error);
+      throw new Error(`Failed to generate PDF: ${error.message}`);
     } finally {
-      await browser.close();
+      if (browser) {
+        await browser.close();
+      }
     }
   }
 }
