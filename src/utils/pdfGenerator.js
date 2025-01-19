@@ -31,16 +31,6 @@ export class PDFGenerator {
   }
 
   static async generateTransactionsPDF(transactions, businessInfo) {
-    // Launch browser with specific configurations
-    // const browser = await puppeteer.launch({
-    //   headless: "new",
-    //   args: [
-    //     "--no-sandbox",
-    //     "--disable-setuid-sandbox",
-    //     "--disable-dev-shm-usage",
-    //     "--font-render-hinting=none",
-    //   ],
-    // });
     let browser = null;
     try {
       browser = await this._getBrowser();
@@ -251,15 +241,6 @@ export class PDFGenerator {
   }
 
   static async generatePartyLedgerPDF(transactions, partyInfo, businessInfo) {
-    // const browser = await puppeteer.launch({
-    //   headless: "new",
-    //   args: [
-    //     "--no-sandbox",
-    //     "--disable-setuid-sandbox",
-    //     "--disable-dev-shm-usage",
-    //     "--font-render-hinting=none",
-    //   ],
-    // });
     let browser = null;
 
     try {
@@ -601,15 +582,6 @@ export class PDFGenerator {
     businessInfo = {},
     partyType = "Customer"
   ) {
-    // const browser = await puppeteer.launch({
-    //   headless: "new",
-    //   args: [
-    //     "--no-sandbox",
-    //     "--disable-setuid-sandbox",
-    //     "--disable-dev-shm-usage",
-    //     "--font-render-hinting=none",
-    //   ],
-    // });
     let browser = null;
 
     try {
