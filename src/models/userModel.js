@@ -42,13 +42,23 @@ export class UserModel {
           formattedDate
         );
 
+      // Generate JWT token for the newly registered user
+      const token = jwt.sign(
+        { id: result.lastInsertRowid, email },
+        config.jwtSecret,
+        { expiresIn: "24h" }
+      );
+
       return {
-        id: result.lastInsertRowid,
-        email,
-        name,
-        mobile,
-        address,
-        dateOfBirth: formattedDate,
+        token,
+        user: {
+          id: result.lastInsertRowid,
+          email,
+          name,
+          mobile,
+          address,
+          dateOfBirth: formattedDate,
+        },
       };
     } catch (error) {
       throw error;
